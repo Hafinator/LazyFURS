@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using LazyFURS.Models;
 using OfficeOpenXml;
+using System.Linq;
 
 namespace LazyFURS
 {
@@ -12,10 +14,13 @@ namespace LazyFURS
     {
         private static readonly HttpClient client = new();
         private static Conversion[] conversionData; // Holds the <currency, dates/rates> data
+        private static List<Dividend> dividends;
 
         private static void Main()
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            dividends = new List<Dividend>();
 
             Console.WriteLine(" __________________________ ");
             Console.WriteLine("|  ______________________  |");
@@ -35,7 +40,7 @@ namespace LazyFURS
             FileInfo existingFile = new(filePath);
             using (ExcelPackage package = new(existingFile))
             {
-                ReadClosedPosition(package);
+                //ReadClosedPosition(package);
                 ReadDividends(package);
             } // the using statement automatically calls Dispose() which closes the package.
 
@@ -57,33 +62,50 @@ namespace LazyFURS
 
             string allData = await response.Content.ReadAsStringAsync();
             string[] rowData = allData.Split("\n");
-            conversionData = new Conversion[rowData.Length];
 
-            for (int i = 1; i < rowData.Length; i++)
+            conversionData = new Conversion[rowData.Length - 1];
+
+            for (int i = 1; i < rowData.Length - 1; i++)
             {
                 string[] row = rowData[i].Split(',');
-                conversionData[i] = new Conversion(row[6], row[7]);
+                // Date and rate are at 6th and 7th position
+                conversionData[i - 1] = new Conversion(row[6], row[7]);
             }
         }
 
         private static void ReadClosedPosition(ExcelPackage package)
         {
-            ExcelWorksheet closedPositions = package.Workbook.Worksheets[1];
+            ExcelWorksheet closedPositionsSheet = package.Workbook.Worksheets[1];
             throw new NotImplementedException();
         }
 
         private static void ReadDividends(ExcelPackage package)
         {
-            ExcelWorksheet dividends = package.Workbook.Worksheets[3];
+            ExcelWorksheet dividendSheet = package.Workbook.Worksheets[3];
 
-            int maxRowIndex = 0;// Indexing starts at 1...
+            int index = 2;// Indexing starts at 1... + we skip the header
             bool isLastRow = false;
 
             while (!isLastRow)
             {
-                if (dividends.Cells[maxRowIndex, dividends.Columns.StartColumn].Value != null)
+                if (dividendSheet.Cells[index, 1].Value != null)
                 {
-                    maxRowIndex++;
+                    Dividend calculateDividend = new Dividend
+                    {
+                        PaymentDate = DateTime.Parse(dividendSheet.Cells[index, 1].Value.ToString()).Date,
+                        FullName = dividendSheet.Cells[index, 2].Value.ToString(),
+                        PositionID = long.Parse(dividendSheet.Cells[index, 6].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
+                        ISIN = dividendSheet.Cells[index, 8].Value.ToString()
+                    };
+
+                    decimal rate = conversionData.First(x => x.IssuingDate == calculateDividend.PaymentDate).Rate; // optimize rate retrial
+
+                    calculateDividend.EURNetDividend = decimal.Parse(dividendSheet.Cells[index, 3].Value.ToString()) / rate;
+                    calculateDividend.EURForeignTax = decimal.Parse(dividendSheet.Cells[index, 5].Value.ToString()) / rate;
+
+                    dividends.Add(calculateDividend);
+
+                    index++;
                     continue;
                 }
                 isLastRow = true;
