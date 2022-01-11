@@ -5,8 +5,8 @@ namespace LazyFURS.Models
 {
     public class Conversion
     {
-        public readonly DateTime IssuingDate;
-        public readonly decimal Rate;
+        public DateTime IssuingDate;
+        public decimal Rate;
 
         public Conversion(string date, string rate)
         {

@@ -76,7 +76,33 @@ namespace LazyFURS
         private static void ReadClosedPosition(ExcelPackage package)
         {
             ExcelWorksheet closedPositionsSheet = package.Workbook.Worksheets[1];
-            throw new NotImplementedException();
+            int index = 2;// Indexing starts at 1... + we skip the header
+            bool isLastRow = false;
+
+            while (!isLastRow)
+            {
+                if (closedPositionsSheet.Cells[index, 1].Value != null)
+                {
+                    Dividend calculateDividend = new Dividend
+                    {
+                        PaymentDate = DateTime.Parse(closedPositionsSheet.Cells[index, 1].Value.ToString()).Date,
+                        FullName = closedPositionsSheet.Cells[index, 2].Value.ToString(),
+                        PositionID = long.Parse(closedPositionsSheet.Cells[index, 6].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
+                        ISIN = closedPositionsSheet.Cells[index, 8].Value.ToString()
+                    };
+
+                    decimal rate = conversionData.First(x => x.IssuingDate == calculateDividend.PaymentDate).Rate; // optimize rate retrial
+
+                    calculateDividend.EURNetDividend = decimal.Parse(closedPositionsSheet.Cells[index, 3].Value.ToString()) / rate;
+                    calculateDividend.EURForeignTax = decimal.Parse(closedPositionsSheet.Cells[index, 5].Value.ToString()) / rate;
+
+                    dividends.Add(calculateDividend);
+
+                    index++;
+                    continue;
+                }
+                isLastRow = true;
+            }
         }
 
         private static void ReadDividends(ExcelPackage package)
@@ -90,7 +116,7 @@ namespace LazyFURS
             {
                 if (dividendSheet.Cells[index, 1].Value != null)
                 {
-                    Dividend calculateDividend = new Dividend
+                    Dividend calculateDividend = new()
                     {
                         PaymentDate = DateTime.Parse(dividendSheet.Cells[index, 1].Value.ToString()).Date,
                         FullName = dividendSheet.Cells[index, 2].Value.ToString(),
