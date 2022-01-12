@@ -13,10 +13,10 @@ namespace LazyFURS.Models
         public decimal EURCloseValue { get; set; }
         public decimal EUROpenPrice { get; set; }
         public decimal EURClosePrice { get; set; }
+        public decimal EURProfit { get; set; }
         public DateTime OpenDate { get; set; }
         public DateTime CloseDate { get; set; }
         public int Leverage { get; set; }
-        public decimal Profit { get; set; }
         public string ISIN { get; set; }
     }
 }
