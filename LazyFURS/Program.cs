@@ -13,14 +13,17 @@ namespace LazyFURS
     internal class Program
     {
         private static readonly HttpClient client = new();
-        private static Conversion[] conversionData; // Holds the <currency, dates/rates> data
+
+        private static Conversion[] conversionData;
         private static List<Dividend> dividends;
         private static List<Position> positions;
+
         public static string exportName;
 
         private static void Main()
         {
-            exportName = "Etoro_EUR-report_" + DateTime.Now.Date;
+            //Prepares the export, example: Etoro_EUR_report_15.1.2022.xlsx
+            exportName = "Etoro_EUR_report_" + DateTime.Now.Day + "_" + DateTime.Now.Month + "_" + DateTime.Now.Year + ".xlsx";
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
@@ -35,20 +38,18 @@ namespace LazyFURS
             Console.WriteLine();
             Console.WriteLine();
 
-            //Console.Write("Path to your Etoro report: ");
-            string filePath = @"D:\Moj\Desktop\etoro-account-statement-1-1-2021-12-31-2021.xlsx"; //Console.ReadLine();
-
-            // TODO Add path verification.
+            Console.Write("Path to your Etoro report: ");
+            string filePath = Console.ReadLine();
 
             ReadCurrenciesApiData().GetAwaiter().GetResult();
 
-            // Prepare the data for exoport
+            //Prepare the data for export
             FileInfo existingFile = new(filePath);
             using (ExcelPackage package = new(existingFile))
             {
                 ReadClosedPosition(package);
                 ReadDividends(package);
-            } // the using statement automatically calls Dispose() which closes the package.
+            } //the using statement automatically calls Dispose() which closes the package.
 
             ExportToFile(existingFile.DirectoryName);
 
@@ -62,7 +63,7 @@ namespace LazyFURS
 
         private static void ExportToFile(string folderPath)
         {
-            using (ExcelPackage newPackage = new ExcelPackage())
+            using (ExcelPackage newPackage = new())
             {
                 // Prepare dividends worksheet
                 PrepareDividends(newPackage);
@@ -74,75 +75,93 @@ namespace LazyFURS
                 newPackage.Workbook.Properties.Title = "Etoro EUR statement";
 
                 // Save our new workbook in the output directory and we are done!
-                newPackage.SaveAs(folderPath + "\"" + exportName);
+                newPackage.SaveAs(folderPath + "\\" + exportName);
             }
         }
 
         private static void PrepareDividends(ExcelPackage newPackage)
         {
             //Order dividend data
-            dividends.OrderBy(x => x.FullName).ThenBy(x => x.PaymentDate);
+            dividends = dividends.OrderBy(x => x.FullName).ThenBy(x => x.PaymentDate).ToList();
 
             //Add a new worksheet to the empty workbook
             ExcelWorksheet dividendsSheet = newPackage.Workbook.Worksheets.Add("Dividends_EUR");
 
             //Add the headers
-            dividendsSheet.Cells[1, 1].Value = "Position Id";
-            dividendsSheet.Cells[1, 2].Value = "ISIN";
-            dividendsSheet.Cells[1, 3].Value = "Payment Date";
-            dividendsSheet.Cells[1, 4].Value = "Full Name";
-            dividendsSheet.Cells[1, 5].Value = "EUR Net Dividend";
-            dividendsSheet.Cells[1, 6].Value = "EUR Foreign Tax";
+            dividendsSheet.Cells[1, 1].Value = "ISIN";
+            dividendsSheet.Column(1).Width = 20;
+            dividendsSheet.Cells[1, 2].Value = "Payment Date";
+            dividendsSheet.Column(2).Width = 20;
+            dividendsSheet.Cells[1, 3].Value = "Full Name";
+            dividendsSheet.Column(3).Width = 40;
+            dividendsSheet.Cells[1, 4].Value = "EUR Net Dividend";
+            dividendsSheet.Column(4).Width = 20;
+            dividendsSheet.Cells[1, 5].Value = "EUR Foreign Tax";
+            dividendsSheet.Column(5).Width = 20;
 
             for (int i = 0; i < dividends.Count; i++)
             {
-                dividendsSheet.Cells[i + 2, 1].Value = dividends[i].PositionId;
-                dividendsSheet.Cells[i + 2, 2].Value = dividends[i].ISIN;
-                dividendsSheet.Cells[i + 2, 3].Value = dividends[i].PaymentDate;
-                dividendsSheet.Cells[i + 2, 4].Value = dividends[i].FullName;
-                dividendsSheet.Cells[i + 2, 5].Value = Math.Round(dividends[i].EURNetDividend, 2);
-                dividendsSheet.Cells[i + 2, 6].Value = Math.Round(dividends[i].EURForeignTax, 2);
+                //Add data
+                dividendsSheet.Cells[i + 2, 1].Value = dividends[i].ISIN;
+                dividendsSheet.Cells[i + 2, 2].Value = dividends[i].PaymentDate.ToShortDateString();
+                dividendsSheet.Cells[i + 2, 3].Value = dividends[i].FullName;
+                dividendsSheet.Cells[i + 2, 4].Value = Math.Round(dividends[i].EURNetDividend, 2);
+                dividendsSheet.Cells[i + 2, 5].Value = Math.Round(dividends[i].EURForeignTax, 2);
             }
         }
 
         private static void PrepareClosedPosition(ExcelPackage newPackage)
         {
             //Order dividend data
-            positions.OrderBy(x => x.FullName).ThenBy(x => x.OpenDate);
+            positions = positions.OrderBy(x => x.FullName).ThenBy(x => x.OpenDate).ToList();
 
-            //Add a new worksheet to the empty workbook
+            //Add a new worksheet to the workbook
             ExcelWorksheet closedPositionSheed = newPackage.Workbook.Worksheets.Add("Closed_positions_EUR");
 
             //Add the headers
-            closedPositionSheed.Cells[1, 1].Value = "Position Id";
-            closedPositionSheed.Cells[1, 2].Value = "ISIN";
-            closedPositionSheed.Cells[1, 3].Value = "Full Name";
-            closedPositionSheed.Cells[1, 4].Value = "Type";
+            closedPositionSheed.Cells[1, 1].Value = "ISIN";
+            closedPositionSheed.Column(1).Width = 20;
+            closedPositionSheed.Cells[1, 2].Value = "Full Name";
+            closedPositionSheed.Column(2).Width = 40;
+            closedPositionSheed.Cells[1, 3].Value = "Type";
+            closedPositionSheed.Column(3).Width = 20;
+            closedPositionSheed.Cells[1, 4].Value = "Trade Type";
+            closedPositionSheed.Column(4).Width = 20;
             closedPositionSheed.Cells[1, 5].Value = "Units";
+            closedPositionSheed.Column(5).Width = 20;
             closedPositionSheed.Cells[1, 6].Value = "Leverage";
+            closedPositionSheed.Column(6).Width = 20;
             closedPositionSheed.Cells[1, 7].Value = "Open Date";
+            closedPositionSheed.Column(7).Width = 20;
             closedPositionSheed.Cells[1, 8].Value = "Close Date";
+            closedPositionSheed.Column(8).Width = 20;
             closedPositionSheed.Cells[1, 9].Value = "EUR Start Value";
+            closedPositionSheed.Column(9).Width = 20;
             closedPositionSheed.Cells[1, 10].Value = "EUR Close Value";
+            closedPositionSheed.Column(10).Width = 20;
             closedPositionSheed.Cells[1, 11].Value = "EUR Open Price";
+            closedPositionSheed.Column(11).Width = 20;
             closedPositionSheed.Cells[1, 12].Value = "EUR Close Price";
+            closedPositionSheed.Column(12).Width = 20;
             closedPositionSheed.Cells[1, 13].Value = "EUR Profit";
+            closedPositionSheed.Column(13).Width = 20;
 
             for (int i = 0; i < positions.Count; i++)
             {
-                closedPositionSheed.Cells[1, 1].Value = "Position Id";
-                closedPositionSheed.Cells[1, 2].Value = "ISIN";
-                closedPositionSheed.Cells[1, 3].Value = "Full Name";
-                closedPositionSheed.Cells[1, 4].Value = "Type";
-                closedPositionSheed.Cells[1, 5].Value = "Units";
-                closedPositionSheed.Cells[1, 6].Value = "Leverage";
-                closedPositionSheed.Cells[1, 7].Value = "Open Date";
-                closedPositionSheed.Cells[1, 8].Value = "Close Date";
-                closedPositionSheed.Cells[1, 9].Value = "EUR Start Value";
-                closedPositionSheed.Cells[1, 10].Value = "EUR Close Value";
-                closedPositionSheed.Cells[1, 11].Value = "EUR Open Price";
-                closedPositionSheed.Cells[1, 12].Value = "EUR Close Price";
-                closedPositionSheed.Cells[1, 13].Value = "EUR Profit";
+                //Add data
+                closedPositionSheed.Cells[i + 2, 1].Value = positions[i].ISIN;
+                closedPositionSheed.Cells[i + 2, 2].Value = positions[i].FullName;
+                closedPositionSheed.Cells[i + 2, 3].Value = positions[i].Type;
+                closedPositionSheed.Cells[i + 2, 4].Value = positions[i].IsLong ? "Long" : "Short";
+                closedPositionSheed.Cells[i + 2, 5].Value = positions[i].Units;
+                closedPositionSheed.Cells[i + 2, 6].Value = positions[i].Leverage;
+                closedPositionSheed.Cells[i + 2, 7].Value = positions[i].OpenDate.ToShortDateString();
+                closedPositionSheed.Cells[i + 2, 8].Value = positions[i].CloseDate.ToShortDateString();
+                closedPositionSheed.Cells[i + 2, 9].Value = positions[i].EURStartValue;
+                closedPositionSheed.Cells[i + 2, 10].Value = positions[i].EURCloseValue;
+                closedPositionSheed.Cells[i + 2, 11].Value = positions[i].EUROpenPrice;
+                closedPositionSheed.Cells[i + 2, 12].Value = positions[i].EURClosePrice;
+                closedPositionSheed.Cells[i + 2, 13].Value = positions[i].EURProfit;
             }
         }
 
@@ -162,10 +181,12 @@ namespace LazyFURS
             for (int i = 1; i < rowData.Length - 1; i++)
             {
                 string[] row = rowData[i].Split(',');
+
                 // Date and rate are at 6th and 7th position
                 conversionData[i - 1] = new Conversion(row[6], row[7]);
             }
 
+            //This is done to optimize data retrieval
             conversionData = conversionData.OrderByDescending(x => x.IssuingDate).ToArray();
         }
 
@@ -180,9 +201,8 @@ namespace LazyFURS
                 if (closedPositionsSheet.Cells[index, 1].Value != null)
                 {
                     string[] actionSplit = closedPositionsSheet.Cells[index, 2].Value.ToString().Split(' ');
-                    Position calculatePosition = new Position
+                    Position calculatePosition = new()
                     {
-                        PositionId = long.Parse(closedPositionsSheet.Cells[index, 1].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
                         IsLong = actionSplit[0] == "Buy",
                         FullName = actionSplit[1],
                         OpenDate = DateTime.Parse(closedPositionsSheet.Cells[index, 5].Value.ToString()).Date,
@@ -193,8 +213,8 @@ namespace LazyFURS
                         ISIN = closedPositionsSheet.Cells[index, 17].Value?.ToString() ?? "",
                     };
 
-                    decimal openRate = GetFirstPossibleRate(calculatePosition.OpenDate).Rate; // optimize rate retrial
-                    decimal closeRate = GetFirstPossibleRate(calculatePosition.CloseDate).Rate; // optimize rate retrial
+                    decimal openRate = GetFirstPossibleRate(calculatePosition.OpenDate).Rate; // optimize rate retrieval
+                    decimal closeRate = GetFirstPossibleRate(calculatePosition.CloseDate).Rate; // optimize rate retrieval
 
                     // Calculate start (open) values
                     calculatePosition.EURStartValue = decimal.Parse(closedPositionsSheet.Cells[index, 3].Value.ToString()) / openRate;
@@ -229,11 +249,10 @@ namespace LazyFURS
                     {
                         PaymentDate = DateTime.Parse(dividendSheet.Cells[index, 1].Value.ToString()).Date,
                         FullName = dividendSheet.Cells[index, 2].Value.ToString(),
-                        PositionId = long.Parse(dividendSheet.Cells[index, 6].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
                         ISIN = dividendSheet.Cells[index, 8].Value.ToString()
                     };
 
-                    decimal rate = GetFirstPossibleRate(calculateDividend.PaymentDate).Rate; // optimize rate retrial
+                    decimal rate = GetFirstPossibleRate(calculateDividend.PaymentDate).Rate; // optimize rate retrieval
 
                     calculateDividend.EURNetDividend = decimal.Parse(dividendSheet.Cells[index, 3].Value.ToString()) / rate;
                     calculateDividend.EURForeignTax = decimal.Parse(dividendSheet.Cells[index, 5].Value.ToString()) / rate;
@@ -253,6 +272,7 @@ namespace LazyFURS
             Conversion result = null;
             while (result == null)
             {
+                //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
                 result = conversionData.FirstOrDefault(x => x.IssuingDate == date);
                 date = date.AddDays(-1);
             }

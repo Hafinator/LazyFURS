@@ -4,7 +4,6 @@ namespace LazyFURS.Models
 {
     public class Position
     {
-        public long PositionId { get; set; }
         public bool IsLong { get; set; }
         public string Type { get; set; }
         public string FullName { get; set; }
