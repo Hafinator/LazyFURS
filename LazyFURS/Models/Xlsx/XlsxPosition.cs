@@ -2,7 +2,7 @@
 
 namespace LazyFURS.Models.Xlsx
 {
-    public class Position
+    public class XlsxPosition
     {
         public bool IsLong { get; set; }
         public string Type { get; set; }

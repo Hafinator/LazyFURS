@@ -2,7 +2,7 @@
 
 namespace LazyFURS.Models.Xlsx
 {
-    public class Dividend
+    public class XlsxDividend
     {
         public string ISIN { get; set; }
         public DateTime PaymentDate { get; set; }

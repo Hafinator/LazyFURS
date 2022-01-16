@@ -16,21 +16,17 @@ namespace LazyFURS
         private static readonly HttpClient client = new();
 
         private static Conversion[] conversionData;
-        private static List<Dividend> dividends;
-        private static List<Position> positions;
+        private static List<XlsxDividend> dividends;
+        private static List<XlsxPosition> positions;
 
-        public static string exportName;
+        private static string exportName;
+
+        //private static bool isXlsx = false;
+
+        //private static Envelope Envelope;
 
         private static void Main()
         {
-            //Prepares the export, example: Etoro_EUR_report_15.1.2022.xlsx
-            exportName = "Etoro_EUR_report_" + DateTime.Now.Day + "_" + DateTime.Now.Month + "_" + DateTime.Now.Year + ".xlsx";
-
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-            dividends = new List<Dividend>();
-            positions = new List<Position>();
-
             Console.WriteLine(" __________________________ ");
             Console.WriteLine("|  ______________________  |");
             Console.WriteLine("| | Welcome to LazyFURS! | |");
@@ -38,6 +34,16 @@ namespace LazyFURS
             Console.WriteLine("|__________________________|");
             Console.WriteLine();
             Console.WriteLine();
+
+            //if (isXlsx)
+            //{
+            //Prepares the export, example: Etoro_EUR_report_15.1.2022.xlsx
+            exportName = "Etoro_EUR_report_" + DateTime.Now.Day + "_" + DateTime.Now.Month + "_" + DateTime.Now.Year + ".xlsx";
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            dividends = new List<XlsxDividend>();
+            positions = new List<XlsxPosition>();
 
             Console.Write("Path to your Etoro report: ");
             string filePath = Console.ReadLine();
@@ -52,7 +58,40 @@ namespace LazyFURS
                 ReadDividends(package);
             } //the using statement automatically calls Dispose() which closes the package.
 
-            ExportToFile(existingFile.DirectoryName);
+            ExportToXlsxFile(existingFile.DirectoryName);
+
+            //}
+            //else
+            //{
+            //    Envelope = new Envelope
+            //    {
+            //        body = new body
+            //        {
+            //            Doh_Div = new Doh_Div
+            //            {
+            //                EmailAddress = "hafnermaks@gmail.com",
+            //                IsResident = true,
+            //                Period = "2021",
+            //                PhoneNumber = "041611451",
+            //                ResidentCountry = "Slovenia",
+            //            },
+            //            Dividend = new Dividend[]
+            //            {
+            //                new Dividend
+            //                {
+            //                    Date = new DateTime(2021,11,4),
+            //                    ForeignTax = 4.56m,
+            //                    PayerName = "MyDividends",
+            //                    Type = "1",
+            //                    Value = 11.56m
+            //                }
+            //            }
+            //        }
+            //    };
+            //    XmlSerializer serializer = new XmlSerializer(typeof(Envelope));
+            //    using (var stream = new StreamWriter("D:\\Moj\\Desktop\\test.xml"))
+            //        serializer.Serialize(stream, Envelope);
+            //}
 
             Console.WriteLine();
             Console.WriteLine("Export done!");
@@ -62,7 +101,9 @@ namespace LazyFURS
             Console.ReadKey();
         }
 
-        private static void ExportToFile(string folderPath)
+        #region XLSX
+
+        private static void ExportToXlsxFile(string folderPath)
         {
             using (ExcelPackage newPackage = new())
             {
@@ -202,7 +243,7 @@ namespace LazyFURS
                 if (closedPositionsSheet.Cells[index, 1].Value != null)
                 {
                     string[] actionSplit = closedPositionsSheet.Cells[index, 2].Value.ToString().Split(' ');
-                    Position calculatePosition = new()
+                    XlsxPosition calculatePosition = new()
                     {
                         IsLong = actionSplit[0] == "Buy",
                         FullName = actionSplit[1],
@@ -246,7 +287,7 @@ namespace LazyFURS
             {
                 if (dividendSheet.Cells[index, 1].Value != null)
                 {
-                    Dividend calculateDividend = new()
+                    XlsxDividend calculateDividend = new()
                     {
                         PaymentDate = DateTime.Parse(dividendSheet.Cells[index, 1].Value.ToString()).Date,
                         FullName = dividendSheet.Cells[index, 2].Value.ToString(),
@@ -266,6 +307,8 @@ namespace LazyFURS
                 isLastRow = true;
             }
         }
+
+        #endregion XLSX
 
         private static Conversion GetFirstPossibleRate(DateTime d)
         {
