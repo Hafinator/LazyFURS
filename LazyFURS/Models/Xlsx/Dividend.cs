@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LazyFURS.Models
+namespace LazyFURS.Models.Xlsx
 {
     public class Dividend
     {
