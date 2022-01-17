@@ -21,9 +21,7 @@ namespace LazyFURS
 
         private static string exportName;
 
-        //private static bool isXlsx = false;
-
-        //private static Envelope Envelope;
+        private static CultureInfo culture;
 
         private static void Main()
         {
@@ -35,8 +33,8 @@ namespace LazyFURS
             Console.WriteLine();
             Console.WriteLine();
 
-            //if (isXlsx)
-            //{
+            culture = new CultureInfo("de-DE");
+
             //Prepares the export, example: Etoro_EUR_report_15.1.2022.xlsx
             exportName = "Etoro_EUR_report_" + DateTime.Now.Day + "_" + DateTime.Now.Month + "_" + DateTime.Now.Year + ".xlsx";
 
@@ -60,39 +58,6 @@ namespace LazyFURS
 
             ExportToXlsxFile(existingFile.DirectoryName);
 
-            //}
-            //else
-            //{
-            //    Envelope = new Envelope
-            //    {
-            //        body = new body
-            //        {
-            //            Doh_Div = new Doh_Div
-            //            {
-            //                EmailAddress = "hafnermaks@gmail.com",
-            //                IsResident = true,
-            //                Period = "2021",
-            //                PhoneNumber = "041611451",
-            //                ResidentCountry = "Slovenia",
-            //            },
-            //            Dividend = new Dividend[]
-            //            {
-            //                new Dividend
-            //                {
-            //                    Date = new DateTime(2021,11,4),
-            //                    ForeignTax = 4.56m,
-            //                    PayerName = "MyDividends",
-            //                    Type = "1",
-            //                    Value = 11.56m
-            //                }
-            //            }
-            //        }
-            //    };
-            //    XmlSerializer serializer = new XmlSerializer(typeof(Envelope));
-            //    using (var stream = new StreamWriter("D:\\Moj\\Desktop\\test.xml"))
-            //        serializer.Serialize(stream, Envelope);
-            //}
-
             Console.WriteLine();
             Console.WriteLine("Export done!");
             Console.WriteLine();
@@ -100,8 +65,6 @@ namespace LazyFURS
             Console.WriteLine("Press any key to exit.");
             Console.ReadKey();
         }
-
-        #region XLSX
 
         private static void ExportToXlsxFile(string folderPath)
         {
@@ -130,9 +93,9 @@ namespace LazyFURS
             ExcelWorksheet dividendsSheet = newPackage.Workbook.Worksheets.Add("Dividends_EUR");
 
             //Add the headers
-            dividendsSheet.Cells[1, 1].Value = "ISIN";
-            dividendsSheet.Column(1).Width = 20;
-            dividendsSheet.Cells[1, 2].Value = "Payment Date";
+            dividendsSheet.Cells[1, 1].Value = "Payment Date";
+            dividendsSheet.Column(1).Width = 15;
+            dividendsSheet.Cells[1, 2].Value = "ISIN";
             dividendsSheet.Column(2).Width = 20;
             dividendsSheet.Cells[1, 3].Value = "Full Name";
             dividendsSheet.Column(3).Width = 40;
@@ -144,11 +107,11 @@ namespace LazyFURS
             for (int i = 0; i < dividends.Count; i++)
             {
                 //Add data
-                dividendsSheet.Cells[i + 2, 1].Value = dividends[i].ISIN;
-                dividendsSheet.Cells[i + 2, 2].Value = dividends[i].PaymentDate.ToShortDateString();
+                dividendsSheet.Cells[i + 2, 1].Value = dividends[i].PaymentDate.ToShortDateString();
+                dividendsSheet.Cells[i + 2, 2].Value = dividends[i].ISIN;
                 dividendsSheet.Cells[i + 2, 3].Value = dividends[i].FullName;
-                dividendsSheet.Cells[i + 2, 4].Value = Math.Round(dividends[i].EURNetDividend, 2);
-                dividendsSheet.Cells[i + 2, 5].Value = Math.Round(dividends[i].EURForeignTax, 2);
+                dividendsSheet.Cells[i + 2, 4].Value = Math.Round(dividends[i].EURNetDividend, 2).ToString(culture);
+                dividendsSheet.Cells[i + 2, 5].Value = Math.Round(dividends[i].EURForeignTax, 2).ToString(culture);
             }
         }
 
@@ -162,31 +125,31 @@ namespace LazyFURS
 
             //Add the headers
             closedPositionSheed.Cells[1, 1].Value = "ISIN";
-            closedPositionSheed.Column(1).Width = 20;
+            closedPositionSheed.Column(1).Width = 15;
             closedPositionSheed.Cells[1, 2].Value = "Full Name";
             closedPositionSheed.Column(2).Width = 40;
             closedPositionSheed.Cells[1, 3].Value = "Type";
-            closedPositionSheed.Column(3).Width = 20;
+            closedPositionSheed.Column(3).Width = 5;
             closedPositionSheed.Cells[1, 4].Value = "Trade Type";
-            closedPositionSheed.Column(4).Width = 20;
+            closedPositionSheed.Column(4).Width = 10;
             closedPositionSheed.Cells[1, 5].Value = "Units";
-            closedPositionSheed.Column(5).Width = 20;
+            closedPositionSheed.Column(5).Width = 15;
             closedPositionSheed.Cells[1, 6].Value = "Leverage";
-            closedPositionSheed.Column(6).Width = 20;
+            closedPositionSheed.Column(6).Width = 10;
             closedPositionSheed.Cells[1, 7].Value = "Open Date";
-            closedPositionSheed.Column(7).Width = 20;
+            closedPositionSheed.Column(7).Width = 15;
             closedPositionSheed.Cells[1, 8].Value = "Close Date";
-            closedPositionSheed.Column(8).Width = 20;
+            closedPositionSheed.Column(8).Width = 15;
             closedPositionSheed.Cells[1, 9].Value = "EUR Start Value";
-            closedPositionSheed.Column(9).Width = 20;
+            closedPositionSheed.Column(9).Width = 15;
             closedPositionSheed.Cells[1, 10].Value = "EUR Close Value";
-            closedPositionSheed.Column(10).Width = 20;
+            closedPositionSheed.Column(10).Width = 15;
             closedPositionSheed.Cells[1, 11].Value = "EUR Open Price";
-            closedPositionSheed.Column(11).Width = 20;
+            closedPositionSheed.Column(11).Width = 15;
             closedPositionSheed.Cells[1, 12].Value = "EUR Close Price";
-            closedPositionSheed.Column(12).Width = 20;
+            closedPositionSheed.Column(12).Width = 15;
             closedPositionSheed.Cells[1, 13].Value = "EUR Profit";
-            closedPositionSheed.Column(13).Width = 20;
+            closedPositionSheed.Column(13).Width = 15;
 
             for (int i = 0; i < positions.Count; i++)
             {
@@ -199,11 +162,11 @@ namespace LazyFURS
                 closedPositionSheed.Cells[i + 2, 6].Value = positions[i].Leverage;
                 closedPositionSheed.Cells[i + 2, 7].Value = positions[i].OpenDate.ToShortDateString();
                 closedPositionSheed.Cells[i + 2, 8].Value = positions[i].CloseDate.ToShortDateString();
-                closedPositionSheed.Cells[i + 2, 9].Value = positions[i].EURStartValue;
-                closedPositionSheed.Cells[i + 2, 10].Value = positions[i].EURCloseValue;
-                closedPositionSheed.Cells[i + 2, 11].Value = positions[i].EUROpenPrice;
-                closedPositionSheed.Cells[i + 2, 12].Value = positions[i].EURClosePrice;
-                closedPositionSheed.Cells[i + 2, 13].Value = positions[i].EURProfit;
+                closedPositionSheed.Cells[i + 2, 9].Value = Math.Round(positions[i].EURStartValue, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 10].Value = Math.Round(positions[i].EURCloseValue, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 11].Value = Math.Round(positions[i].EUROpenPrice, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 12].Value = Math.Round(positions[i].EURClosePrice, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 13].Value = Math.Round(positions[i].EURProfit, 2).ToString(culture);
             }
         }
 
@@ -307,8 +270,6 @@ namespace LazyFURS
                 isLastRow = true;
             }
         }
-
-        #endregion XLSX
 
         private static Conversion GetFirstPossibleRate(DateTime d)
         {
