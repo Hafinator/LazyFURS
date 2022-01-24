@@ -23,6 +23,9 @@ namespace LazyFURS
 
         private static CultureInfo culture;
 
+        private static bool compactDividend;
+        private static bool compactPositions;
+
         private static void Main()
         {
             Console.WriteLine(" __________________________ ");
@@ -46,6 +49,15 @@ namespace LazyFURS
             Console.Write("Path to your Etoro report: ");
             string filePath = Console.ReadLine();
 
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.Write("Would you like to combine dividends of the same source + same date into a single entity? (y/N)? ");
+            compactDividend = Console.ReadLine().ToLower() == "y";
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.Write("Would you like to combine positions of the same source + same date + same price into a single entity? (y/N)? ");
+            compactPositions = Console.ReadLine().ToLower() == "y";
+
             ReadCurrenciesApiData().GetAwaiter().GetResult();
 
             //Prepare the data for export
@@ -68,26 +80,29 @@ namespace LazyFURS
 
         private static void ExportToXlsxFile(string folderPath)
         {
-            using (ExcelPackage newPackage = new())
-            {
-                // Prepare dividends worksheet
-                PrepareDividends(newPackage);
+            using ExcelPackage newPackage = new();
+            // Prepare dividends worksheet
+            PrepareDividends(newPackage);
 
-                // Prepare closed positions sheet
-                PrepareClosedPosition(newPackage);
+            // Prepare closed positions sheet
+            PrepareClosedPosition(newPackage);
 
-                // Set some document properties
-                newPackage.Workbook.Properties.Title = "Etoro EUR statement";
+            // Set some document properties
+            newPackage.Workbook.Properties.Title = "Etoro EUR statement";
 
-                // Save our new workbook in the output directory and we are done!
-                newPackage.SaveAs(folderPath + "\\" + exportName);
-            }
+            // Save our new workbook in the output directory and we are done!
+            newPackage.SaveAs(folderPath + "\\" + exportName);
         }
 
         private static void PrepareDividends(ExcelPackage newPackage)
         {
             //Order dividend data
             dividends = dividends.OrderBy(x => x.FullName).ThenBy(x => x.PaymentDate).ToList();
+
+            if (compactDividend)
+            {
+                CompactDividends();
+            }
 
             //Add a new worksheet to the empty workbook
             ExcelWorksheet dividendsSheet = newPackage.Workbook.Worksheets.Add("Dividends_EUR");
@@ -115,10 +130,50 @@ namespace LazyFURS
             }
         }
 
+        private static void CompactDividends()
+        {
+            for (int i = 0; i < dividends.Count; i++)
+            {
+                if (i > 0 && dividends[i].FullName == dividends[i - 1].FullName && dividends[i].PaymentDate == dividends[i - 1].PaymentDate)
+                {
+                    dividends[i - 1].EURNetDividend += dividends[i].EURNetDividend;
+                    dividends[i - 1].EURForeignTax += dividends[i].EURForeignTax;
+                    dividends.Remove(dividends[i]);
+                    i--;
+                }
+            }
+        }
+
+        private static void CompactPositions()
+        {
+            for (int i = 0; i < positions.Count; i++)
+            {
+                if (i > 0
+                    && positions[i].FullName == positions[i - 1].FullName
+                    && positions[i].OpenDate.Date == positions[i - 1].OpenDate.Date
+                    && positions[i].CloseDate.Date == positions[i - 1].CloseDate.Date
+                    && positions[i].OpenRate == positions[i - 1].OpenRate
+                    && positions[i].CloseRate == positions[i - 1].CloseRate)
+                {
+                    positions[i - 1].EURStartValue += positions[i].EURStartValue;
+                    positions[i - 1].EURCloseValue += positions[i].EURCloseValue;
+                    positions[i - 1].EURProfit += positions[i].EURProfit;
+                    positions[i - 1].Units += positions[i].Units;
+                    positions.Remove(positions[i]);
+                    i--;
+                }
+            }
+        }
+
         private static void PrepareClosedPosition(ExcelPackage newPackage)
         {
             //Order dividend data
             positions = positions.OrderBy(x => x.FullName).ThenBy(x => x.OpenDate).ToList();
+
+            if (compactPositions)
+            {
+                CompactPositions();
+            }
 
             //Add a new worksheet to the workbook
             ExcelWorksheet closedPositionSheed = newPackage.Workbook.Worksheets.Add("Closed_positions_EUR");
@@ -209,7 +264,7 @@ namespace LazyFURS
                     XlsxPosition calculatePosition = new()
                     {
                         IsLong = actionSplit[0] == "Buy",
-                        FullName = actionSplit[1],
+                        FullName = GenerateName(actionSplit),
                         OpenDate = DateTime.Parse(closedPositionsSheet.Cells[index, 5].Value.ToString()).Date,
                         CloseDate = DateTime.Parse(closedPositionsSheet.Cells[index, 6].Value.ToString()).Date,
                         Leverage = int.Parse(closedPositionsSheet.Cells[index, 7].Value.ToString()),
@@ -228,7 +283,11 @@ namespace LazyFURS
                     // Calculate end (close) values
                     calculatePosition.EURProfit = decimal.Parse(closedPositionsSheet.Cells[index, 9].Value.ToString()) / closeRate;
                     calculatePosition.EURCloseValue = calculatePosition.EURStartValue + calculatePosition.EURProfit;
-                    calculatePosition.EURClosePrice = calculatePosition.EURCloseValue / calculatePosition.Units;
+                    calculatePosition.EURClosePrice = calculatePosition.EURCloseValue / calculatePosition.Units / closeRate;
+
+                    // Values in native currency
+                    calculatePosition.OpenRate = decimal.Parse(closedPositionsSheet.Cells[index, 10].Value.ToString());
+                    calculatePosition.CloseRate = decimal.Parse(closedPositionsSheet.Cells[index, 11].Value.ToString());
 
                     positions.Add(calculatePosition);
 
@@ -237,6 +296,16 @@ namespace LazyFURS
                 }
                 isLastRow = true;
             }
+        }
+
+        private static string GenerateName(string[] actionSplit)
+        {
+            string result = "";
+            for (int i = 1; i < actionSplit.Length; i++)
+            {
+                result += actionSplit[i] + " ";
+            }
+            return result;
         }
 
         private static void ReadDividends(ExcelPackage package)

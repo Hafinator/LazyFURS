@@ -13,6 +13,8 @@ namespace LazyFURS.Models.Xlsx
         public decimal EUROpenPrice { get; set; }
         public decimal EURClosePrice { get; set; }
         public decimal EURProfit { get; set; }
+        public decimal OpenRate { get; set; }
+        public decimal CloseRate { get; set; }
         public DateTime OpenDate { get; set; }
         public DateTime CloseDate { get; set; }
         public int Leverage { get; set; }
