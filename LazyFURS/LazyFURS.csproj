@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,9 +8,4 @@
   <ItemGroup>
     <PackageReference Include="EPPlus" Version="5.8.4" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models\Xml\KDVP\" />
-  </ItemGroup>
-
 </Project>
