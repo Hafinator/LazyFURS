@@ -1,13 +1,13 @@
-﻿using System;
+﻿using LazyFURS.Models;
+using LazyFURS.Models.Xlsx;
+using OfficeOpenXml;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using LazyFURS.Models.Xlsx;
-using LazyFURS.Models;
-using OfficeOpenXml;
-using System.Linq;
 
 namespace LazyFURS
 {
@@ -146,14 +146,16 @@ namespace LazyFURS
 
         private static void CompactPositions()
         {
-            for (int i = 0; i < positions.Count; i++)
+            for (int i = 1; i < positions.Count; i++)
             {
-                if (i > 0
-                    && positions[i].FullName == positions[i - 1].FullName
+                if (positions[i].FullName == positions[i - 1].FullName
                     && positions[i].OpenDate.Date == positions[i - 1].OpenDate.Date
                     && positions[i].CloseDate.Date == positions[i - 1].CloseDate.Date
                     && positions[i].OpenRate == positions[i - 1].OpenRate
-                    && positions[i].CloseRate == positions[i - 1].CloseRate)
+                    && positions[i].CloseRate == positions[i - 1].CloseRate
+                    && positions[i].Type == positions[i - 1].Type
+                    && positions[i].Leverage == positions[i - 1].Leverage
+                    && positions[i].IsLong == positions[i - 1].IsLong)
                 {
                     positions[i - 1].EURStartValue += positions[i].EURStartValue;
                     positions[i - 1].EURCloseValue += positions[i].EURCloseValue;
@@ -170,7 +172,7 @@ namespace LazyFURS
             //Order dividend data
             positions = positions.OrderBy(x => x.FullName).ThenBy(x => x.OpenDate).ToList();
 
-            if (compactPositions)
+            if (compactPositions && positions.Count > 1)
             {
                 CompactPositions();
             }
@@ -213,7 +215,7 @@ namespace LazyFURS
                 closedPositionSheed.Cells[i + 2, 2].Value = positions[i].FullName;
                 closedPositionSheed.Cells[i + 2, 3].Value = positions[i].Type;
                 closedPositionSheed.Cells[i + 2, 4].Value = positions[i].IsLong ? "Long" : "Short";
-                closedPositionSheed.Cells[i + 2, 5].Value = positions[i].Units;
+                closedPositionSheed.Cells[i + 2, 5].Value = positions[i].Units.ToString(culture);
                 closedPositionSheed.Cells[i + 2, 6].Value = positions[i].Leverage;
                 closedPositionSheed.Cells[i + 2, 7].Value = positions[i].OpenDate.ToShortDateString();
                 closedPositionSheed.Cells[i + 2, 8].Value = positions[i].CloseDate.ToShortDateString();
