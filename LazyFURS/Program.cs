@@ -26,15 +26,11 @@ namespace LazyFURS
         private static bool compactDividend;
         private static bool compactPositions;
 
-        private static void Main()
+        private static async Task Main()
         {
-            Console.WriteLine(" __________________________ ");
-            Console.WriteLine("|  ______________________  |");
-            Console.WriteLine("| | Welcome to LazyFURS! | |");
-            Console.WriteLine("| |______________________| |");
-            Console.WriteLine("|__________________________|");
-            Console.WriteLine();
-            Console.WriteLine();
+            WelcomeMessage();
+
+            WarningMessage();
 
             culture = new CultureInfo("de-DE");
 
@@ -58,7 +54,7 @@ namespace LazyFURS
             Console.Write("Would you like to combine positions of the same source + same date + same price into a single entity? (y/N)? ");
             compactPositions = Console.ReadLine().ToLower() == "y";
 
-            ReadCurrenciesApiData().GetAwaiter().GetResult();
+            await ReadCurrenciesApiData();
 
             //Prepare the data for export
             FileInfo existingFile = new(filePath);
@@ -76,6 +72,24 @@ namespace LazyFURS
 
             Console.WriteLine("Press any key to exit.");
             Console.ReadKey();
+        }
+
+        private static void WarningMessage()
+        {
+            Console.WriteLine();
+            Console.WriteLine("THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.");
+            Console.WriteLine();
+        }
+
+        private static void WelcomeMessage()
+        {
+            Console.WriteLine(" __________________________ ");
+            Console.WriteLine("|  ______________________  |");
+            Console.WriteLine("| | Welcome to LazyFURS! | |");
+            Console.WriteLine("| |______________________| |");
+            Console.WriteLine("|__________________________|");
+            Console.WriteLine();
+            Console.WriteLine();
         }
 
         private static void ExportToXlsxFile(string folderPath)
@@ -114,7 +128,7 @@ namespace LazyFURS
             dividendsSheet.Column(2).Width = 20;
             dividendsSheet.Cells[1, 3].Value = "Full Name";
             dividendsSheet.Column(3).Width = 40;
-            dividendsSheet.Cells[1, 4].Value = "EUR Net Dividend";
+            dividendsSheet.Cells[1, 4].Value = "EUR Dividend";
             dividendsSheet.Column(4).Width = 20;
             dividendsSheet.Cells[1, 5].Value = "EUR Foreign Tax";
             dividendsSheet.Column(5).Width = 20;
@@ -125,7 +139,7 @@ namespace LazyFURS
                 dividendsSheet.Cells[i + 2, 1].Value = dividends[i].PaymentDate.ToShortDateString();
                 dividendsSheet.Cells[i + 2, 2].Value = dividends[i].ISIN;
                 dividendsSheet.Cells[i + 2, 3].Value = dividends[i].FullName;
-                dividendsSheet.Cells[i + 2, 4].Value = Math.Round(dividends[i].EURNetDividend, 2).ToString(culture);
+                dividendsSheet.Cells[i + 2, 4].Value = Math.Round(dividends[i].EURDividend, 2).ToString(culture);
                 dividendsSheet.Cells[i + 2, 5].Value = Math.Round(dividends[i].EURForeignTax, 2).ToString(culture);
             }
         }
@@ -136,7 +150,7 @@ namespace LazyFURS
             {
                 if (i > 0 && dividends[i].FullName == dividends[i - 1].FullName && dividends[i].PaymentDate == dividends[i - 1].PaymentDate)
                 {
-                    dividends[i - 1].EURNetDividend += dividends[i].EURNetDividend;
+                    dividends[i - 1].EURDividend += dividends[i].EURDividend;
                     dividends[i - 1].EURForeignTax += dividends[i].EURForeignTax;
                     dividends.Remove(dividends[i]);
                     i--;
@@ -330,7 +344,7 @@ namespace LazyFURS
 
                     decimal rate = GetFirstPossibleRate(calculateDividend.PaymentDate).Rate; // optimize rate retrieval
 
-                    calculateDividend.EURNetDividend = decimal.Parse(dividendSheet.Cells[index, 3].Value.ToString()) / rate;
+                    calculateDividend.EURDividend = decimal.Parse(dividendSheet.Cells[index, 3].Value.ToString()) / rate;
                     calculateDividend.EURForeignTax = decimal.Parse(dividendSheet.Cells[index, 5].Value.ToString()) / rate;
 
                     dividends.Add(calculateDividend);
