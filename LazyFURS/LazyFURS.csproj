@@ -8,4 +8,8 @@
   <ItemGroup>
     <PackageReference Include="EPPlus" Version="6.1.2" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\Xml\Div\" />
+  </ItemGroup>
 </Project>
