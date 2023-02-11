@@ -1,5 +1,6 @@
 ﻿using LazyFURS.Models;
 using LazyFURS.Models.Xlsx;
+using LazyFURS.Models.Xml.SpecialTypes;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,9 @@ namespace LazyFURS
         private static bool compactDividend;
         private static bool compactPositions;
 
+        private static IsinToAddress isinToAddress;
+        private static IsinToCountry isinToCountry;
+
         private static async Task Main()
         {
             WelcomeMessage();
@@ -42,6 +46,7 @@ namespace LazyFURS
             dividends = new List<XlsxDividend>();
             positions = new List<XlsxPosition>();
 
+            Console.WriteLine("This location will be used as the path for the exports as well.");
             Console.Write("Path to your Etoro report: ");
             string filePath = Console.ReadLine();
 
@@ -54,30 +59,64 @@ namespace LazyFURS
             Console.Write("Would you like to combine positions of the same source + same date + same price into a single entity? (y/N)? ");
             compactPositions = Console.ReadLine().ToLower() == "y";
 
+            isinToAddress = new IsinToAddress();
+            isinToCountry = new IsinToCountry();
+            FileInfo existingFile = null;
+
             await ReadCurrenciesApiData();
 
-            //Prepare the data for export
-            FileInfo existingFile = new(filePath);
-            using (ExcelPackage package = new(existingFile))
+            char input = Console.ReadKey().KeyChar;
+
+            if (input != '1')
             {
+                //Prepare the data for export
+                existingFile = new(filePath);
+                using ExcelPackage package = new(existingFile);
                 ReadClosedPosition(package);
                 ReadDividends(package);
-            } //the using statement automatically calls Dispose() which closes the package.
+                //the using statement automatically calls Dispose() which closes the package.
+            }
+            while (input != '1')
+            {
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine();
 
-            ExportToXlsxFile(existingFile.DirectoryName);
-
-            Console.WriteLine();
-            Console.WriteLine("Export done!");
-            Console.WriteLine();
+                if (input == '2')
+                {
+                    ExportToXlsxFile(existingFile.DirectoryName);
+                }
+                else if (input == '3')
+                {
+                    PrepareDivReport();
+                }
+                else if (input == '4')
+                {
+                    PrepareKdvpReport();
+                }
+                else if (input == '5')
+                {
+                    PrepareDIfiReport();
+                }
+                GenerateOptionsMenu();
+            }
 
             Console.WriteLine("Press any key to exit.");
             Console.ReadKey();
+        }
+
+        private static void WriteExportDone()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Export done!");
+            Console.WriteLine();
         }
 
         private static void WarningMessage()
         {
             Console.WriteLine();
             Console.WriteLine("THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.");
+            Console.WriteLine("YOU BAER ALL RESPONSIBILITY FOR ANY PROBLEMS WHEN SUBMITTING YOUR TAX REPORTS.");
             Console.WriteLine();
         }
 
@@ -106,6 +145,8 @@ namespace LazyFURS
 
             // Save our new workbook in the output directory and we are done!
             newPackage.SaveAs(folderPath + "\\" + exportName);
+
+            WriteExportDone();
         }
 
         private static void PrepareDividends(ExcelPackage newPackage)
@@ -144,6 +185,252 @@ namespace LazyFURS
             }
         }
 
+        private static void PrepareDivReport()
+        {
+            uint vatId = SpecifyVatId();
+            Models.Xml.Div.Envelope envelope = new()
+            {
+                Header = new()
+                {
+                    domain = "edavki.durs.si",
+                    CustodianInfo = new(),
+                    responseTo = null,
+                    taxpayer = new()
+                    {
+                        taxNumber = vatId,
+                        taxpayerType = nameof(TaxPayerType.FO),
+                    },
+                    Workflow = new()
+                    {
+                        DocumentWorkflowID = "O",
+                        DocumentWorkflowName = null
+                    },
+                },
+                AttachmentList = Array.Empty<Models.Xml.Div.AttachmentListExternalAttachment>(),
+                Signatures = new(),
+                body = new()
+                {
+                    Doh_Div = new()
+                    {
+                        Period = (DateTime.UtcNow.Year - 1).ToString(),
+                    },
+                    Dividend = new Models.Xml.Div.EnvelopeBodyDividend[dividends.Count]
+                }
+            };
+            for (int i = 0; i < dividends.Count; i++)
+            {
+                string country = isinToCountry.GetCountry(dividends[i].ISIN);
+                envelope.body.Dividend[i] = new Models.Xml.Div.EnvelopeBodyDividend
+                {
+                    Date = dividends[i].PaymentDate,
+                    PayerIdentificationNumber = dividends[i].ISIN,
+                    PayerName = dividends[i].FullName,
+                    PayerAddress = isinToAddress.GetAddress(dividends[i].ISIN),
+                    PayerCountry = country,
+                    Type = "1",
+                    Value = Math.Round(dividends[i].EURDividend, 2),
+                    ForeignTax = Math.Round(dividends[i].EURForeignTax, 2),
+                    SourceCountry = country,
+                    //ReliefStatement = "I don't want to pay tax! TODO"
+                };
+            }
+
+            System.Xml.Serialization.XmlSerializer writer = new(typeof(Models.Xml.Div.Envelope));
+
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "//Doh_Div.xml";
+            FileStream file = File.Create(path);
+
+            writer.Serialize(file, envelope);
+            file.Close();
+
+            WriteExportDone();
+        }
+
+        private static uint SpecifyVatId()
+        {
+            Console.WriteLine("Specify your VAT ID: ");
+            uint vatId;
+            while (!uint.TryParse(Console.ReadLine(), out vatId))
+            {
+                Console.WriteLine("Specify your VAT ID: ");
+            }
+
+            return vatId;
+        }
+
+        private static void PrepareKdvpReport()
+        {
+            List<XlsxPosition> nonCfdPositions = new(positions.Count);
+            foreach (XlsxPosition position in positions)
+            {
+                if (position.Type != "CFD")
+                {
+                    if (position.Type == "Crypto")
+                    {
+                        continue;
+                    }
+                    nonCfdPositions.Add(position);
+                }
+            }
+
+            uint vatId = SpecifyVatId();
+
+            Models.Xml.KDVP.Envelope envelope = new()
+            {
+                Header = new()
+                {
+                    taxpayer = new()
+                    {
+                        taxNumber = vatId,
+                        taxpayerType = nameof(TaxPayerType.FO),
+                    },
+                    domain = "edavki.durs.si"
+                },
+                AttachmentList = Array.Empty<Models.Xml.KDVP.AttachmentListExternalAttachment>(),
+                Signatures = new Models.Xml.KDVP.Signatures(),
+                body = new Models.Xml.KDVP.EnvelopeBody()
+                {
+                    bodyContent = string.Empty,
+                    Doh_KDVP = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVP()
+                    {
+                        KDVP = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVP()
+                        {
+                            DocumentWorkflowID = "O",
+                            Year = DateTime.UtcNow.Year - 1,
+                            PeriodStart = new DateTime(DateTime.Now.Year - 1, 1, 1),
+                            PeriodEnd = new DateTime(DateTime.Now.Year - 1, 12, 31),
+                        },
+                        KDVPItem = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItem[nonCfdPositions.Count],
+                    }
+                }
+            };
+
+            List<XlsxPosition> samePositions = new(nonCfdPositions.Count);
+            for (int i = 0; i < nonCfdPositions.Count; i++)
+            {
+                samePositions.Add(nonCfdPositions[i]);
+                Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItemSecurities securities = new()
+                {
+                    IsFond = false,
+                    ISIN = nonCfdPositions[i].ISIN
+                };
+
+                for (int j = i + 1; j < nonCfdPositions.Count; j++)
+                {
+                    if (nonCfdPositions[i].ISIN == nonCfdPositions[j].ISIN)
+                        samePositions.Add(nonCfdPositions[i]);
+                    else
+                        break;
+                }
+
+                securities.Row = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRow[samePositions.Count * 2];
+                for (int j = 0; j < samePositions.Count; j++)
+                {
+                    securities.Row[j * 2] = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRow
+                    {
+                        ID = j * 2,
+                        F8 = samePositions[j].Units,
+
+                        Purchase = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRowPurchase
+                        {
+                            F1 = samePositions[j].OpenDate,
+                            F2 = "B",
+                            F3 = samePositions[j].Units,
+                            F4 = samePositions[j].EUROpenPrice
+                        }
+                    };
+                    securities.Row[j * 2 + 1] = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRow
+                    {
+                        ID = j * 2 + 1,
+                        F8 = 0,
+
+                        Sale = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRowSale
+                        {
+                            F6 = samePositions[j].CloseDate,
+                            F7 = samePositions[j].Units,
+                            F9 = samePositions[j].EURClosePrice,
+                            F10 = false
+                        }
+                    };
+                }
+
+                envelope.body.Doh_KDVP.KDVPItem[i] = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItem
+                {
+                    ItemID = i + 1,
+                    InventoryListType = "PLVP",
+                    HasForeignTax = false,
+                    HasLossTransfer = false,
+                    ForeignTransfer = false,
+                    TaxDecreaseConformance = false,
+                    Name = nonCfdPositions[i].ISIN,
+                    Securities = securities,
+                };
+                i += samePositions.Count - 1;
+                samePositions.Clear();
+            }
+
+            System.Xml.Serialization.XmlSerializer writer = new(typeof(Models.Xml.KDVP.Envelope));
+
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "//Doh_KDVP.xml";
+            FileStream file = File.Create(path);
+
+            writer.Serialize(file, envelope);
+            file.Close();
+
+            WriteExportDone();
+        }
+
+        private static void PrepareDIfiReport()
+        {
+            List<XlsxPosition> cdfPositions = new(positions.Count);
+            foreach (XlsxPosition position in positions)
+            {
+                if (position.Type == "CFD")
+                    cdfPositions.Add(position);
+            }
+
+            uint vatId = SpecifyVatId();
+
+            Models.Xml.IFI.Envelope envelope = new()
+            {
+                Header = new Models.Xml.IFI.Header
+                {
+                    taxpayer = new Models.Xml.IFI.HeaderTaxpayer
+                    {
+                        taxNumber = vatId,
+                        taxpayerType = nameof(TaxPayerType.FO),
+                    },
+                    Workflow = new Models.Xml.IFI.HeaderWorkflow
+                    {
+                        DocumentWorkflowID = "O"
+                    },
+                    domain = "edavki.durs.si",
+                },
+                AttachmentList = Array.Empty<Models.Xml.IFI.AttachmentListExternalAttachment>(),
+                Signatures = new Models.Xml.IFI.Signatures(),
+                body = new Models.Xml.IFI.EnvelopeBody
+                {
+                    bodyContent = string.Empty,
+                    D_IFI = new Models.Xml.IFI.EnvelopeBodyD_IFI
+                    {
+                        PeriodStart = new DateTime(DateTime.Now.Year - 1, 1, 1),
+                        PeriodEnd = new DateTime(DateTime.Now.Year - 1, 12, 31),
+                        TItem = new Models.Xml.IFI.EnvelopeBodyD_IFITItem[cdfPositions.Count]
+                    }
+                }
+            };
+
+            System.Xml.Serialization.XmlSerializer writer = new(typeof(Models.Xml.IFI.Envelope));
+
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "//Doh_KDVP.xml";
+            FileStream file = File.Create(path);
+
+            writer.Serialize(file, envelope);
+            file.Close();
+
+            WriteExportDone();
+        }
+
         private static void CompactDividends()
         {
             for (int i = 0; i < dividends.Count; i++)
@@ -179,6 +466,17 @@ namespace LazyFURS
                     i--;
                 }
             }
+        }
+
+        private static void GenerateOptionsMenu()
+        {
+            Console.WriteLine("What report would you like to generate?");
+            Console.WriteLine();
+            Console.WriteLine("1) Exit");
+            Console.WriteLine("2) Human readable .xlsx report");
+            Console.WriteLine("3) Doh_Div report");
+            Console.WriteLine("4) Doh_KDVP report");
+            Console.WriteLine("5) D-IFI report");
         }
 
         private static void PrepareClosedPosition(ExcelPackage newPackage)
@@ -298,6 +596,10 @@ namespace LazyFURS
 
                     // Calculate end (close) values
                     calculatePosition.EURProfit = decimal.Parse(closedPositionsSheet.Cells[index, 9].Value.ToString()) / closeRate;
+                    if (!calculatePosition.IsLong)
+                    {
+                        calculatePosition.EURProfit *= -1; // if it's short then we negate the profit since we make money when the prices fall
+                    }
                     calculatePosition.EURCloseValue = calculatePosition.EURStartValue + calculatePosition.EURProfit;
                     calculatePosition.EURClosePrice = calculatePosition.EURCloseValue / calculatePosition.Units / closeRate;
 

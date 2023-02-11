@@ -10,8 +10,8 @@ namespace LazyFURS.Models
 
         public Conversion(string date, string rate)
         {
-            DateTime.TryParse(date, out IssuingDate);
-            decimal.TryParse(rate, NumberStyles.Number, new CultureInfo("en-GB"), out Rate);
+            _ = DateTime.TryParse(date, out IssuingDate);
+            _ = decimal.TryParse(rate, NumberStyles.Number, new CultureInfo("en-GB"), out Rate);
         }
     }
 }

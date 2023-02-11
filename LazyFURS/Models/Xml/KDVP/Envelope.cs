@@ -1,4 +1,6 @@
-﻿namespace LazyFURS.Models.Xml.KDVP;
+﻿using System;
+
+namespace LazyFURS.Models.Xml.KDVP;
 
 // NOTE: Generated code may require at least .NET Framework 4.5 or .NET Core/Standard 2.0.
 /// <remarks/>
@@ -162,7 +164,7 @@ public partial class Header
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/EDP-Common-1.xsd")]
 public partial class HeaderTaxpayer
 {
-    private byte taxNumberField;
+    private uint taxNumberField;
 
     private string taxpayerTypeField;
 
@@ -197,7 +199,7 @@ public partial class HeaderTaxpayer
     private string countryNameField;
 
     /// <remarks/>
-    public byte taxNumber
+    public uint taxNumber
     {
         get
         {
@@ -917,11 +919,11 @@ public partial class EnvelopeBodyDoh_KDVP
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_KDVP_9.xsd")]
 public partial class EnvelopeBodyDoh_KDVPKDVP
 {
-    private byte documentWorkflowIDField;
+    private string documentWorkflowIDField;
 
     private string documentWorkflowNameField;
 
-    private byte yearField;
+    private int yearField;
 
     private System.DateTime periodStartField;
 
@@ -935,7 +937,7 @@ public partial class EnvelopeBodyDoh_KDVPKDVP
 
     private string telephoneNumberField;
 
-    private byte securityCountField;
+    private int securityCountField;
 
     private byte securityShortCountField;
 
@@ -956,7 +958,7 @@ public partial class EnvelopeBodyDoh_KDVPKDVP
     private string emailField;
 
     /// <remarks/>
-    public byte DocumentWorkflowID
+    public string DocumentWorkflowID
     {
         get
         {
@@ -982,7 +984,7 @@ public partial class EnvelopeBodyDoh_KDVPKDVP
     }
 
     /// <remarks/>
-    public byte Year
+    public int Year
     {
         get
         {
@@ -1075,7 +1077,7 @@ public partial class EnvelopeBodyDoh_KDVPKDVP
     }
 
     /// <remarks/>
-    public byte SecurityCount
+    public int SecurityCount
     {
         get
         {
@@ -1451,7 +1453,7 @@ public partial class EnvelopeBodyDoh_KDVPAttachment
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_KDVP_9.xsd")]
 public partial class EnvelopeBodyDoh_KDVPKDVPItem
 {
-    private uint itemIDField;
+    private int itemIDField;
 
     private string inventoryListTypeField;
 
@@ -1469,12 +1471,12 @@ public partial class EnvelopeBodyDoh_KDVPKDVPItem
 
     private bool foreignTransferField;
 
-    private string taxDecreaseConformanceField;
+    private bool? taxDecreaseConformanceField;
 
     private EnvelopeBodyDoh_KDVPKDVPItemSecurities securitiesField;
 
     /// <remarks/>
-    public uint ItemID
+    public int ItemID
     {
         get
         {
@@ -1593,7 +1595,7 @@ public partial class EnvelopeBodyDoh_KDVPKDVPItem
 
     /// <remarks/>
     [System.Xml.Serialization.XmlElementAttribute(IsNullable = true)]
-    public string TaxDecreaseConformance
+    public bool? TaxDecreaseConformance
     {
         get
         {
@@ -1708,14 +1710,16 @@ public partial class EnvelopeBodyDoh_KDVPKDVPItemSecurities
 [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_KDVP_9.xsd")]
 public partial class EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRow
 {
-    private uint idField;
+    private int idField;
 
     private EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRowPurchase purchaseField;
+
+    private EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRowSale saleField;
 
     private decimal f8Field;
 
     /// <remarks/>
-    public uint ID
+    public int ID
     {
         get
         {
@@ -1737,6 +1741,19 @@ public partial class EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRow
         set
         {
             this.purchaseField = value;
+        }
+    }
+
+    /// <remarks/>
+    public EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRowSale Sale
+    {
+        get
+        {
+            return this.saleField;
+        }
+        set
+        {
+            this.saleField = value;
         }
     }
 
@@ -1819,7 +1836,7 @@ public partial class EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRowPurchase
         }
         set
         {
-            this.f4Field = value;
+            this.f4Field = Math.Round(value, 8);
         }
     }
 
@@ -1833,6 +1850,74 @@ public partial class EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRowPurchase
         set
         {
             this.f5Field = value;
+        }
+    }
+}
+
+/// <remarks/>
+[SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_KDVP_9.xsd")]
+public partial class EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRowSale
+{
+    private DateTime f6Field;
+
+    private decimal f7Field;
+
+    private decimal f9Field;
+
+    private bool f10Field;
+
+    /// <remarks/>
+    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
+    public System.DateTime F6
+    {
+        get
+        {
+            return this.f6Field;
+        }
+        set
+        {
+            this.f6Field = value;
+        }
+    }
+
+    /// <remarks/>
+    public decimal F7
+    {
+        get
+        {
+            return this.f7Field;
+        }
+        set
+        {
+            this.f7Field = value;
+        }
+    }
+
+    /// <remarks/>
+    public decimal F9
+    {
+        get
+        {
+            return this.f9Field;
+        }
+        set
+        {
+            this.f9Field = Math.Round(value, 8);
+        }
+    }
+
+    /// <remarks/>
+    public bool F10
+    {
+        get
+        {
+            return this.f10Field;
+        }
+        set
+        {
+            this.f10Field = value;
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿namespace LazyFURS.Models.Xml.Div;
+﻿namespace LazyFURS.Models.Xml.IFI;
 
 // NOTE: Generated code may require at least .NET Framework 4.5 or .NET Core/Standard 2.0.
 /// <remarks/>
 [System.SerializableAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_Div_3.xsd")]
-[System.Xml.Serialization.XmlRootAttribute(Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_Div_3.xsd", IsNullable = false)]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+[System.Xml.Serialization.XmlRootAttribute(Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd", IsNullable = false)]
 public partial class Envelope
 {
     private Header headerField;
@@ -775,99 +775,37 @@ public partial class SignaturesPreparerSignaturePreparer
 /// <remarks/>
 [System.SerializableAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_Div_3.xsd")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
 public partial class EnvelopeBody
 {
-    private EnvelopeBodyDoh_Div doh_DivField;
+    private string bodyContentField;
 
-    private EnvelopeBodyDividend[] dividendField;
-
-    private EnvelopeBodyCorpData[] corpDataField;
-
-    private EnvelopeBodyCorpDataDetail[] corpDataDetailField;
-
-    private EnvelopeBodySubseqSubmissDecision subseqSubmissDecisionField;
-
-    private EnvelopeBodySubseqSubmissProposal subseqSubmissProposalField;
+    private EnvelopeBodyD_IFI d_IFIField;
 
     /// <remarks/>
-    public EnvelopeBodyDoh_Div Doh_Div
+    [System.Xml.Serialization.XmlElementAttribute(Namespace = "http://edavki.durs.si/Documents/Schemas/EDP-Common-1.xsd")]
+    public string bodyContent
     {
         get
         {
-            return this.doh_DivField;
+            return this.bodyContentField;
         }
         set
         {
-            this.doh_DivField = value;
+            this.bodyContentField = value;
         }
     }
 
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute("Dividend")]
-    public EnvelopeBodyDividend[] Dividend
+    public EnvelopeBodyD_IFI D_IFI
     {
         get
         {
-            return this.dividendField;
+            return this.d_IFIField;
         }
         set
         {
-            this.dividendField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute("CorpData")]
-    public EnvelopeBodyCorpData[] CorpData
-    {
-        get
-        {
-            return this.corpDataField;
-        }
-        set
-        {
-            this.corpDataField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute("CorpDataDetail")]
-    public EnvelopeBodyCorpDataDetail[] CorpDataDetail
-    {
-        get
-        {
-            return this.corpDataDetailField;
-        }
-        set
-        {
-            this.corpDataDetailField = value;
-        }
-    }
-
-    /// <remarks/>
-    public EnvelopeBodySubseqSubmissDecision SubseqSubmissDecision
-    {
-        get
-        {
-            return this.subseqSubmissDecisionField;
-        }
-        set
-        {
-            this.subseqSubmissDecisionField = value;
-        }
-    }
-
-    /// <remarks/>
-    public EnvelopeBodySubseqSubmissProposal SubseqSubmissProposal
-    {
-        get
-        {
-            return this.subseqSubmissProposalField;
-        }
-        set
-        {
-            this.subseqSubmissProposalField = value;
+            this.d_IFIField = value;
         }
     }
 }
@@ -875,234 +813,142 @@ public partial class EnvelopeBody
 /// <remarks/>
 [System.SerializableAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_Div_3.xsd")]
-public partial class EnvelopeBodyDoh_Div
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+public partial class EnvelopeBodyD_IFI
 {
-    private string periodField;
+    private System.DateTime periodStartField;
 
-    private string emailAddressField;
+    private System.DateTime periodEndField;
 
-    private string phoneNumberField;
+    private string telephoneNumberField;
 
-    private string residentCountryField;
+    private string emailField;
 
-    private bool isResidentField;
+    private EnvelopeBodyD_IFITItem[] tItemField;
 
-    private bool lockedField;
-
-    private bool selfReportField;
-
-    private bool wfTypeUField;
-
-    /// <remarks/>
-    public string Period
-    {
-        get
-        {
-            return this.periodField;
-        }
-        set
-        {
-            this.periodField = value;
-        }
-    }
-
-    /// <remarks/>
-    public string EmailAddress
-    {
-        get
-        {
-            return this.emailAddressField;
-        }
-        set
-        {
-            this.emailAddressField = value;
-        }
-    }
-
-    /// <remarks/>
-    public string PhoneNumber
-    {
-        get
-        {
-            return this.phoneNumberField;
-        }
-        set
-        {
-            this.phoneNumberField = value;
-        }
-    }
-
-    /// <remarks/>
-    public string ResidentCountry
-    {
-        get
-        {
-            return this.residentCountryField;
-        }
-        set
-        {
-            this.residentCountryField = value;
-        }
-    }
-
-    /// <remarks/>
-    public bool IsResident
-    {
-        get
-        {
-            return this.isResidentField;
-        }
-        set
-        {
-            this.isResidentField = value;
-        }
-    }
-
-    /// <remarks/>
-    public bool Locked
-    {
-        get
-        {
-            return this.lockedField;
-        }
-        set
-        {
-            this.lockedField = value;
-        }
-    }
-
-    /// <remarks/>
-    public bool SelfReport
-    {
-        get
-        {
-            return this.selfReportField;
-        }
-        set
-        {
-            this.selfReportField = value;
-        }
-    }
-
-    /// <remarks/>
-    public bool WfTypeU
-    {
-        get
-        {
-            return this.wfTypeUField;
-        }
-        set
-        {
-            this.wfTypeUField = value;
-        }
-    }
-}
-
-/// <remarks/>
-[System.SerializableAttribute()]
-[System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_Div_3.xsd")]
-public partial class EnvelopeBodyDividend
-{
-    private System.DateTime dateField;
-
-    private string payerTaxNumberField;
-
-    private string payerIdentificationNumberField;
-
-    private string payerNameField;
-
-    private string payerAddressField;
-
-    private string payerCountryField;
-
-    private string typeField;
-
-    private decimal valueField;
-
-    private decimal foreignTaxField;
-
-    private string sourceCountryField;
-
-    private string reliefStatementField;
+    private EnvelopeBodyD_IFIAttachment[] attachmentField;
 
     /// <remarks/>
     [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
-    public System.DateTime Date
+    public System.DateTime PeriodStart
     {
         get
         {
-            return this.dateField;
+            return this.periodStartField;
         }
         set
         {
-            this.dateField = value;
+            this.periodStartField = value;
         }
     }
 
     /// <remarks/>
-    public string PayerTaxNumber
+    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
+    public System.DateTime PeriodEnd
     {
         get
         {
-            return this.payerTaxNumberField;
+            return this.periodEndField;
         }
         set
         {
-            this.payerTaxNumberField = value;
+            this.periodEndField = value;
         }
     }
 
     /// <remarks/>
-    public string PayerIdentificationNumber
+    public string TelephoneNumber
     {
         get
         {
-            return this.payerIdentificationNumberField;
+            return this.telephoneNumberField;
         }
         set
         {
-            this.payerIdentificationNumberField = value;
+            this.telephoneNumberField = value;
         }
     }
 
     /// <remarks/>
-    public string PayerName
+    public string Email
     {
         get
         {
-            return this.payerNameField;
+            return this.emailField;
         }
         set
         {
-            this.payerNameField = value;
+            this.emailField = value;
         }
     }
 
     /// <remarks/>
-    public string PayerAddress
+    [System.Xml.Serialization.XmlElementAttribute("TItem")]
+    public EnvelopeBodyD_IFITItem[] TItem
     {
         get
         {
-            return this.payerAddressField;
+            return this.tItemField;
         }
         set
         {
-            this.payerAddressField = value;
+            this.tItemField = value;
         }
     }
 
     /// <remarks/>
-    public string PayerCountry
+    [System.Xml.Serialization.XmlElementAttribute("Attachment")]
+    public EnvelopeBodyD_IFIAttachment[] Attachment
     {
         get
         {
-            return this.payerCountryField;
+            return this.attachmentField;
         }
         set
         {
-            this.payerCountryField = value;
+            this.attachmentField = value;
+        }
+    }
+}
+
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+public partial class EnvelopeBodyD_IFITItem
+{
+    private string typeIdField;
+
+    private string typeField;
+
+    private string typeNameField;
+
+    private string nameField;
+
+    private string codeField;
+
+    private string iSINField;
+
+    private bool hasForeignTaxField;
+
+    private string foreignTaxField;
+
+    private string countryIdField;
+
+    private string countryNameField;
+
+    private EnvelopeBodyD_IFITItemTSubItem[] tSubItemField;
+
+    /// <remarks/>
+    public string TypeId
+    {
+        get
+        {
+            return this.typeIdField;
+        }
+        set
+        {
+            this.typeIdField = value;
         }
     }
 
@@ -1120,22 +966,73 @@ public partial class EnvelopeBodyDividend
     }
 
     /// <remarks/>
-    //[System.Xml.Serialization.XmlElementAttribute(DataType = "Amount_Type")]
-    public decimal Value
+    public string TypeName
     {
         get
         {
-            return this.valueField;
+            return this.typeNameField;
         }
         set
         {
-            this.valueField = value;
+            this.typeNameField = value;
         }
     }
 
     /// <remarks/>
-    //[System.Xml.Serialization.XmlElementAttribute(DataType = "Amount_Type")]
-    public decimal ForeignTax
+    public string Name
+    {
+        get
+        {
+            return this.nameField;
+        }
+        set
+        {
+            this.nameField = value;
+        }
+    }
+
+    /// <remarks/>
+    public string Code
+    {
+        get
+        {
+            return this.codeField;
+        }
+        set
+        {
+            this.codeField = value;
+        }
+    }
+
+    /// <remarks/>
+    public string ISIN
+    {
+        get
+        {
+            return this.iSINField;
+        }
+        set
+        {
+            this.iSINField = value;
+        }
+    }
+
+    /// <remarks/>
+    public bool HasForeignTax
+    {
+        get
+        {
+            return this.hasForeignTaxField;
+        }
+        set
+        {
+            this.hasForeignTaxField = value;
+        }
+    }
+
+    /// <remarks/>
+    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
+    public string ForeignTax
     {
         get
         {
@@ -1148,177 +1045,42 @@ public partial class EnvelopeBodyDividend
     }
 
     /// <remarks/>
-    public string SourceCountry
+    public string CountryId
     {
         get
         {
-            return this.sourceCountryField;
+            return this.countryIdField;
         }
         set
         {
-            this.sourceCountryField = value;
+            this.countryIdField = value;
         }
     }
 
     /// <remarks/>
-    public string ReliefStatement
+    public string CountryName
     {
         get
         {
-            return this.reliefStatementField;
+            return this.countryNameField;
         }
         set
         {
-            this.reliefStatementField = value;
-        }
-    }
-}
-
-/// <remarks/>
-[System.SerializableAttribute()]
-[System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_Div_3.xsd")]
-public partial class EnvelopeBodyCorpData
-{
-    private int idField;
-
-    private string tradeIdField;
-
-    private System.DateTime soldDateField;
-
-    private string corpAmountField;
-
-    private string corpShareField;
-
-    private string corpSoldAmountField;
-
-    private string corpSoldShareField;
-
-    private string nominalTotalValueField;
-
-    private string sumField;
-
-    /// <remarks/>
-    public int Id
-    {
-        get
-        {
-            return this.idField;
-        }
-        set
-        {
-            this.idField = value;
+            this.countryNameField = value;
         }
     }
 
     /// <remarks/>
-    public string TradeId
+    [System.Xml.Serialization.XmlElementAttribute("TSubItem")]
+    public EnvelopeBodyD_IFITItemTSubItem[] TSubItem
     {
         get
         {
-            return this.tradeIdField;
+            return this.tSubItemField;
         }
         set
         {
-            this.tradeIdField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
-    public System.DateTime SoldDate
-    {
-        get
-        {
-            return this.soldDateField;
-        }
-        set
-        {
-            this.soldDateField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string CorpAmount
-    {
-        get
-        {
-            return this.corpAmountField;
-        }
-        set
-        {
-            this.corpAmountField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string CorpShare
-    {
-        get
-        {
-            return this.corpShareField;
-        }
-        set
-        {
-            this.corpShareField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string CorpSoldAmount
-    {
-        get
-        {
-            return this.corpSoldAmountField;
-        }
-        set
-        {
-            this.corpSoldAmountField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string CorpSoldShare
-    {
-        get
-        {
-            return this.corpSoldShareField;
-        }
-        set
-        {
-            this.corpSoldShareField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string NominalTotalValue
-    {
-        get
-        {
-            return this.nominalTotalValueField;
-        }
-        set
-        {
-            this.nominalTotalValueField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string Sum
-    {
-        get
-        {
-            return this.sumField;
-        }
-        set
-        {
-            this.sumField = value;
+            this.tSubItemField = value;
         }
     }
 }
@@ -1326,196 +1088,36 @@ public partial class EnvelopeBodyCorpData
 /// <remarks/>
 [System.SerializableAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_Div_3.xsd")]
-public partial class EnvelopeBodyCorpDataDetail
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+public partial class EnvelopeBodyD_IFITItemTSubItem
 {
-    private int idField;
+    private EnvelopeBodyD_IFITItemTSubItemPurchase purchaseField;
 
-    private System.DateTime purchDateField;
-
-    private string purchTypeField;
-
-    private string purchAmountField;
-
-    private string purchShareField;
-
-    private string valueOfPurchasedField;
-
-    private string valueAtPurchaseField;
-
-    private string soldAmountField;
-
-    private string soldShareField;
-
-    private string soldValueField;
-
-    private string soldSharesValueAtPurchaseField;
-
-    private string grossSoldValueField;
+    private decimal f8Field;
 
     /// <remarks/>
-    public int Id
+    public EnvelopeBodyD_IFITItemTSubItemPurchase Purchase
     {
         get
         {
-            return this.idField;
+            return this.purchaseField;
         }
         set
         {
-            this.idField = value;
+            this.purchaseField = value;
         }
     }
 
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
-    public System.DateTime PurchDate
+    public decimal F8
     {
         get
         {
-            return this.purchDateField;
+            return this.f8Field;
         }
         set
         {
-            this.purchDateField = value;
-        }
-    }
-
-    /// <remarks/>
-    public string PurchType
-    {
-        get
-        {
-            return this.purchTypeField;
-        }
-        set
-        {
-            this.purchTypeField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string PurchAmount
-    {
-        get
-        {
-            return this.purchAmountField;
-        }
-        set
-        {
-            this.purchAmountField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string PurchShare
-    {
-        get
-        {
-            return this.purchShareField;
-        }
-        set
-        {
-            this.purchShareField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string ValueOfPurchased
-    {
-        get
-        {
-            return this.valueOfPurchasedField;
-        }
-        set
-        {
-            this.valueOfPurchasedField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string ValueAtPurchase
-    {
-        get
-        {
-            return this.valueAtPurchaseField;
-        }
-        set
-        {
-            this.valueAtPurchaseField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string SoldAmount
-    {
-        get
-        {
-            return this.soldAmountField;
-        }
-        set
-        {
-            this.soldAmountField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string SoldShare
-    {
-        get
-        {
-            return this.soldShareField;
-        }
-        set
-        {
-            this.soldShareField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string SoldValue
-    {
-        get
-        {
-            return this.soldValueField;
-        }
-        set
-        {
-            this.soldValueField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string SoldSharesValueAtPurchase
-    {
-        get
-        {
-            return this.soldSharesValueAtPurchaseField;
-        }
-        set
-        {
-            this.soldSharesValueAtPurchaseField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "integer")]
-    public string GrossSoldValue
-    {
-        get
-        {
-            return this.grossSoldValueField;
-        }
-        set
-        {
-            this.grossSoldValueField = value;
+            this.f8Field = value;
         }
     }
 }
@@ -1523,53 +1125,82 @@ public partial class EnvelopeBodyCorpDataDetail
 /// <remarks/>
 [System.SerializableAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_Div_3.xsd")]
-public partial class EnvelopeBodySubseqSubmissDecision
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+public partial class EnvelopeBodyD_IFITItemTSubItemPurchase
 {
-    private string decisionIdField;
+    private System.DateTime f1Field;
 
-    private System.DateTime decisionDateField;
+    private string f2Field;
 
-    private System.DateTime submissionDeadlineField;
+    private decimal f3Field;
+
+    private decimal f4Field;
+
+    private bool f9Field;
 
     /// <remarks/>
-    public string DecisionId
+    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
+    public System.DateTime F1
     {
         get
         {
-            return this.decisionIdField;
+            return this.f1Field;
         }
         set
         {
-            this.decisionIdField = value;
+            this.f1Field = value;
         }
     }
 
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
-    public System.DateTime DecisionDate
+    public string F2
     {
         get
         {
-            return this.decisionDateField;
+            return this.f2Field;
         }
         set
         {
-            this.decisionDateField = value;
+            this.f2Field = value;
         }
     }
 
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
-    public System.DateTime SubmissionDeadline
+    public decimal F3
     {
         get
         {
-            return this.submissionDeadlineField;
+            return this.f3Field;
         }
         set
         {
-            this.submissionDeadlineField = value;
+            this.f3Field = value;
+        }
+    }
+
+    /// <remarks/>
+    public decimal F4
+    {
+        get
+        {
+            return this.f4Field;
+        }
+        set
+        {
+            this.f4Field = value;
+        }
+    }
+
+    /// <remarks/>
+    public bool F9
+    {
+        get
+        {
+            return this.f9Field;
+        }
+        set
+        {
+            this.f9Field = value;
         }
     }
 }
@@ -1577,53 +1208,21 @@ public partial class EnvelopeBodySubseqSubmissDecision
 /// <remarks/>
 [System.SerializableAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/Doh_Div_3.xsd")]
-public partial class EnvelopeBodySubseqSubmissProposal
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+public partial class EnvelopeBodyD_IFIAttachment
 {
-    private System.DateTime startDateField;
-
-    private System.DateTime proposalDeadlineField;
-
-    private string delayReasonsField;
+    private string documentField;
 
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
-    public System.DateTime StartDate
+    public string Document
     {
         get
         {
-            return this.startDateField;
+            return this.documentField;
         }
         set
         {
-            this.startDateField = value;
-        }
-    }
-
-    /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
-    public System.DateTime ProposalDeadline
-    {
-        get
-        {
-            return this.proposalDeadlineField;
-        }
-        set
-        {
-            this.proposalDeadlineField = value;
-        }
-    }
-
-    /// <remarks/>
-    public string DelayReasons
-    {
-        get
-        {
-            return this.delayReasonsField;
-        }
-        set
-        {
-            this.delayReasonsField = value;
+            this.documentField = value;
         }
     }
 }

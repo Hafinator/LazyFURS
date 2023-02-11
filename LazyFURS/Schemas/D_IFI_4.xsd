@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+           xmlns:edp="http://edavki.durs.si/Documents/Schemas/EDP-Common-1.xsd" 
+           targetNamespace="http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd" elementFormDefault="qualified">
+  
+  <xs:import namespace="http://edavki.durs.si/Documents/Schemas/EDP-Common-1.xsd" schemaLocation="EDP-Common-1.xsd"/>
+
+  <!--document structure-->
+  <xs:element name="Envelope">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="edp:Header"/>
+        <xs:element ref="edp:AttachmentList" minOccurs="0" />
+        <xs:element ref="edp:Signatures"/>
+        <xs:element name="body">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element ref="edp:bodyContent"/>
+              <xs:element ref="D_IFI"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!--type definitions-->
+  <xs:element name="D_IFI">
+    <xs:complexType>
+      <xs:sequence>
+        <!--Common-->
+        <xs:element name="PeriodStart" type="xs:date" minOccurs="0" />
+        <xs:element name="PeriodEnd" type="xs:date" minOccurs="0" />
+        <xs:element name="TelephoneNumber" type="xs:string" minOccurs="0" />
+        <xs:element name="Email" type="xs:string" minOccurs="0" />
+        <xs:element ref="TItem" minOccurs="0" maxOccurs="unbounded" />
+
+        <xs:element name="Attachment" minOccurs="0" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation>Priloge</xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Document" type="typeDocumentName" minOccurs="0" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="TItem">
+    <xs:annotation>
+      <xs:documentation>Popisni list</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="TypeId" type="typeInventory" minOccurs="1" />
+        <xs:element name="Type" type="typeStr01to04" minOccurs="0" />
+        <xs:element name="TypeName" type="xs:string" minOccurs="0" />
+        <xs:element name="Name" type="xs:string" minOccurs="0" />
+        <xs:element name="Code" type="xs:string" minOccurs="0" />
+        <xs:element name="ISIN" type="typeISIN" minOccurs="0" />
+        <xs:element name="HasForeignTax" type="xs:boolean" minOccurs="0"/>
+        <xs:element name="ForeignTax" type="typeDecimalPos14_4" minOccurs="0"  />
+        <xs:element name="CountryId" type="xs:string" minOccurs="0" />
+        <xs:element name="CountryName" type="xs:string" minOccurs="0" />
+        <xs:choice>
+          <xs:element ref="TSubItem" minOccurs="0" maxOccurs="unbounded" />
+          <xs:element ref="TShortSubItem" minOccurs="0" maxOccurs="unbounded" />
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="TSubItem">
+    <xs:annotation>
+      <xs:documentation>Popisni list IFI</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice>
+          <xs:element name="Purchase">
+            <xs:annotation>
+              <xs:documentation>Pridobitev</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="F1" type="xs:date" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Datum pridobitve</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F2" type="typeGainType" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Način pridobitve</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F3" type="typeDecimalPos12_8" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Količina</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F4" type="typeDecimalPos14_8" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Nabavna vrednost ob pridobitvi (na enoto)</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F9" type="xs:boolean" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Trgovanje z vzvodom</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="Sale">
+            <xs:annotation>
+              <xs:documentation>Odsvojitev</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="F5" type="xs:date" minOccurs="1">
+                  <xs:annotation>
+                    <xs:documentation>Datum odsvojitve</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F6" type="typeDecimalPos12_8" minOccurs="1">
+                  <xs:annotation>
+                    <xs:documentation>Količina odsvojenega v.p.</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F7" type="typeDecimalPos14_8" minOccurs="1">
+                  <xs:annotation>
+                    <xs:documentation>Vrednost ob odsvojitvi</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+        <xs:element name="F8" type="typeDecimalNeg12_8" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>Zaloga IFI</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="TShortSubItem">
+    <xs:annotation>
+      <xs:documentation>Popisni list IFI za posle na kratko</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice>
+          <xs:element name="Sale">
+            <xs:annotation>
+              <xs:documentation>Odsvojitev</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="F1" type="xs:date" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Datum odsvojitve</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F2" type="typeDecimalPos12_8" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Količina odsvojenega v.p.</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F3" type="typeDecimalPos14_8" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Vrednost ob odsvojitvi</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F9" type="xs:boolean" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Trgovanje z vzvodom</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="Purchase" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation>Pridobitev</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="F4" type="xs:date" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Datum pridobitve</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F5" type="typeGainType" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Način pridobitve</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F6" type="typeDecimalPos12_8" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Količina</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+                <xs:element name="F7" type="typeDecimalPos14_8" minOccurs="0">
+                  <xs:annotation>
+                    <xs:documentation>Nabavna vrednost ob pridobitvi (na enoto)</xs:documentation>
+                  </xs:annotation>
+                </xs:element>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+        <xs:element name="F8" type="typeDecimalNeg12_8" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>Zaloga IFI</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:simpleType name="typeInventory">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="PLIFI"></xs:enumeration>
+      <xs:enumeration value="PLIFIShort"></xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="typeISIN">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="12" />
+      <xs:maxLength value="12" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="typeRunningNumber">
+    <xs:restriction base="xs:int">
+      <xs:minInclusive value="0" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="typeGainType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="A">
+        <xs:annotation>
+          <xs:documentation>vložek kapitala</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="B">
+        <xs:annotation>
+          <xs:documentation>nakup</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="C">
+        <xs:annotation>
+          <xs:documentation>povečanje kapitala družbe z lastnimi sredstvi zavezanca</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="D">
+        <xs:annotation>
+          <xs:documentation>povečanje kapitala družbe iz sredstev družbe</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="E">
+        <xs:annotation>
+          <xs:documentation>zamenjava kapitala ob statusnih spremembah družbe</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="F">
+        <xs:annotation>
+          <xs:documentation>dedovanje</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="G">
+        <xs:annotation>
+          <xs:documentation>darilo</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="H">
+        <xs:annotation>
+          <xs:documentation>drugo</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+
+  <xs:simpleType name="typeDecimalPos14_4">
+    <xs:restriction base="xs:decimal">
+      <xs:pattern value="\d{1,12}(\.\d{1,4})?" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="typeDecimalPos14_8">
+    <xs:restriction base="xs:decimal">
+      <xs:pattern value="\d{1,14}(\.\d{1,8})?" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="typeDecimalPos12_8">
+    <xs:restriction base="xs:decimal">
+      <xs:pattern value="\d{1,12}(\.\d{1,8})?" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="typeDecimalNeg12_8">
+    <xs:restriction base="xs:decimal">
+      <xs:pattern value="[-]?\d{1,12}(\.\d{1,8})?" />
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:simpleType name="typeStr01to04">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="0[1-4]" />
+    </xs:restriction>
+  </xs:simpleType>
+   
+
+  <xs:simpleType name="typeName">
+    <xs:restriction base="xs:string">
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="typeDocumentName">
+    <xs:restriction base="typeName">
+      <xs:maxLength value="70" />
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>
