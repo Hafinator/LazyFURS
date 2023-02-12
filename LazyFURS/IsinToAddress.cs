@@ -5,7 +5,7 @@ namespace LazyFURS
 {
     internal class IsinToAddress
     {
-        private Dictionary<string, string> data = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> data = new();
 
         public IsinToAddress()
         {
