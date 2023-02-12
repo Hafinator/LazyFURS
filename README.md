@@ -11,5 +11,6 @@ or create a new issue and I will try to resolve it.
 
 For Addresses you can provide them in this formal: 
 ISIN, Address 
+\n
 For Country:
 ISIN, ISO_3166-1_alpha-2
