@@ -79,6 +79,16 @@ namespace LazyFURS
                 using ExcelPackage package = new(existingFile); //the using statement automatically calls Dispose() which closes the package.
                 ReadClosedPosition(package);
                 ReadDividends(package);
+
+                if (compactDividend && dividends.Count > 1)
+                {
+                    CompactDividends();
+                }
+
+                if (compactPositions && positions.Count > 1)
+                {
+                    CompactPositions();
+                }
             }
 
             while (input != '1')
@@ -158,11 +168,6 @@ namespace LazyFURS
 
         private static void PrepareDividends(ExcelPackage newPackage)
         {
-            if (compactDividend)
-            {
-                CompactDividends();
-            }
-
             //Add a new worksheet to the empty workbook
             ExcelWorksheet dividendsSheet = newPackage.Workbook.Worksheets.Add("Dividends_EUR");
 
@@ -603,11 +608,6 @@ namespace LazyFURS
 
         private static void PrepareClosedPosition(ExcelPackage newPackage)
         {
-            if (compactPositions && positions.Count > 1)
-            {
-                CompactPositions();
-            }
-
             //Add a new worksheet to the workbook
             ExcelWorksheet closedPositionSheed = newPackage.Workbook.Worksheets.Add("Closed_positions_EUR");
 
