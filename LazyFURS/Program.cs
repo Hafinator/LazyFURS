@@ -29,6 +29,7 @@ namespace LazyFURS
 
         private static IsinToAddress isinToAddress;
         private static IsinToCountry isinToCountry;
+        private static CountryToTaxReduction countryToTaxReduction;
 
         private static async Task Main()
         {
@@ -53,29 +54,33 @@ namespace LazyFURS
             Console.WriteLine();
             Console.WriteLine();
             Console.Write("Would you like to combine dividends of the same source + same date into a single entity? (y/N)? ");
-            compactDividend = Console.ReadLine().ToLower() == "y";
+            char input = Console.ReadKey().KeyChar;
+            compactDividend = input == 'y' || input == 'Y';
             Console.WriteLine();
             Console.WriteLine();
             Console.Write("Would you like to combine positions of the same source + same date + same price into a single entity? (y/N)? ");
-            compactPositions = Console.ReadLine().ToLower() == "y";
+            input = Console.ReadKey().KeyChar;
+            compactPositions = input == 'y' || input == 'Y';
 
-            isinToAddress = new IsinToAddress();
-            isinToCountry = new IsinToCountry();
+            isinToAddress = new();
+            isinToCountry = new();
+            countryToTaxReduction = new();
             FileInfo existingFile = null;
 
             await ReadCurrenciesApiData();
 
-            char input = Console.ReadKey().KeyChar;
+            GenerateOptionsMenu();
+            input = Console.ReadKey().KeyChar;
 
             if (input != '1')
             {
                 //Prepare the data for export
                 existingFile = new(filePath);
-                using ExcelPackage package = new(existingFile);
+                using ExcelPackage package = new(existingFile); //the using statement automatically calls Dispose() which closes the package.
                 ReadClosedPosition(package);
                 ReadDividends(package);
-                //the using statement automatically calls Dispose() which closes the package.
             }
+
             while (input != '1')
             {
                 Console.WriteLine();
@@ -88,19 +93,21 @@ namespace LazyFURS
                 }
                 else if (input == '3')
                 {
-                    PrepareDivReport();
+                    PrepareDivReport(existingFile.DirectoryName);
                 }
                 else if (input == '4')
                 {
-                    PrepareKdvpReport();
+                    PrepareKdvpReport(existingFile.DirectoryName);
                 }
                 else if (input == '5')
                 {
-                    PrepareDIfiReport();
+                    PrepareDIfiReport(existingFile.DirectoryName);
                 }
                 GenerateOptionsMenu();
+                input = Console.ReadKey().KeyChar;
             }
 
+            Console.WriteLine("");
             Console.WriteLine("Press any key to exit.");
             Console.ReadKey();
         }
@@ -151,9 +158,6 @@ namespace LazyFURS
 
         private static void PrepareDividends(ExcelPackage newPackage)
         {
-            //Order dividend data
-            dividends = dividends.OrderBy(x => x.FullName).ThenBy(x => x.PaymentDate).ToList();
-
             if (compactDividend)
             {
                 CompactDividends();
@@ -185,9 +189,10 @@ namespace LazyFURS
             }
         }
 
-        private static void PrepareDivReport()
+        private static void PrepareDivReport(string directoryName)
         {
             uint vatId = SpecifyVatId();
+            bool lowerTax = LowerTaxConfirmation();
             Models.Xml.Div.Envelope envelope = new()
             {
                 Header = new()
@@ -231,19 +236,29 @@ namespace LazyFURS
                     Value = Math.Round(dividends[i].EURDividend, 2),
                     ForeignTax = Math.Round(dividends[i].EURForeignTax, 2),
                     SourceCountry = country,
-                    //ReliefStatement = "I don't want to pay tax! TODO"
                 };
+                if (lowerTax)
+                {
+                    envelope.body.Dividend[i].ReliefStatement = countryToTaxReduction.GetDoubleTaxationExemption(country);
+                }
             }
 
             System.Xml.Serialization.XmlSerializer writer = new(typeof(Models.Xml.Div.Envelope));
 
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "//Doh_Div.xml";
+            string path = directoryName + "//Doh_Div.xml";
             FileStream file = File.Create(path);
 
             writer.Serialize(file, envelope);
             file.Close();
 
             WriteExportDone();
+        }
+
+        private static bool LowerTaxConfirmation()
+        {
+            Console.WriteLine("Would you like your tax reduced using international treatise if they exist? (y/N):");
+            char input = Console.ReadKey().KeyChar;
+            return input == 'y' || input == 'Y';
         }
 
         private static uint SpecifyVatId()
@@ -258,7 +273,7 @@ namespace LazyFURS
             return vatId;
         }
 
-        private static void PrepareKdvpReport()
+        private static void PrepareKdvpReport(string directoryName)
         {
             List<XlsxPosition> nonCfdPositions = new(positions.Count);
             foreach (XlsxPosition position in positions)
@@ -306,6 +321,7 @@ namespace LazyFURS
             };
 
             List<XlsxPosition> samePositions = new(nonCfdPositions.Count);
+            int KDVPItemIndex = 0;
             for (int i = 0; i < nonCfdPositions.Count; i++)
             {
                 samePositions.Add(nonCfdPositions[i]);
@@ -354,9 +370,9 @@ namespace LazyFURS
                     };
                 }
 
-                envelope.body.Doh_KDVP.KDVPItem[i] = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItem
+                envelope.body.Doh_KDVP.KDVPItem[KDVPItemIndex] = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItem
                 {
-                    ItemID = i + 1,
+                    ItemID = KDVPItemIndex + 1,
                     InventoryListType = "PLVP",
                     HasForeignTax = false,
                     HasLossTransfer = false,
@@ -367,11 +383,12 @@ namespace LazyFURS
                 };
                 i += samePositions.Count - 1;
                 samePositions.Clear();
+                KDVPItemIndex++;
             }
 
             System.Xml.Serialization.XmlSerializer writer = new(typeof(Models.Xml.KDVP.Envelope));
 
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "//Doh_KDVP.xml";
+            string path = directoryName + "//Doh_KDVP.xml";
             FileStream file = File.Create(path);
 
             writer.Serialize(file, envelope);
@@ -380,13 +397,13 @@ namespace LazyFURS
             WriteExportDone();
         }
 
-        private static void PrepareDIfiReport()
+        private static void PrepareDIfiReport(string directoryName)
         {
-            List<XlsxPosition> cdfPositions = new(positions.Count);
+            List<XlsxPosition> cfdPositions = new(positions.Count);
             foreach (XlsxPosition position in positions)
             {
                 if (position.Type == "CFD")
-                    cdfPositions.Add(position);
+                    cfdPositions.Add(position);
             }
 
             uint vatId = SpecifyVatId();
@@ -415,14 +432,119 @@ namespace LazyFURS
                     {
                         PeriodStart = new DateTime(DateTime.Now.Year - 1, 1, 1),
                         PeriodEnd = new DateTime(DateTime.Now.Year - 1, 12, 31),
-                        TItem = new Models.Xml.IFI.EnvelopeBodyD_IFITItem[cdfPositions.Count]
+                        TItem = new Models.Xml.IFI.EnvelopeBodyD_IFITItem[cfdPositions.Count]
                     }
                 }
             };
 
+            List<XlsxPosition> sameLongPosition = new(cfdPositions.Count);
+            List<XlsxPosition> sameShortPosition = new(cfdPositions.Count);
+            int TItemIndex = 0;
+            for (int i = 0; i < cfdPositions.Count; i++)
+            {
+                if (cfdPositions[i].IsLong)
+                    sameLongPosition.Add(cfdPositions[i]);
+                else
+                    sameShortPosition.Add(cfdPositions[i]);
+
+                for (int j = i + 1; j < cfdPositions.Count; j++)
+                {
+                    if (cfdPositions[j].FullName == cfdPositions[i].FullName && cfdPositions[j].IsLong)
+                        sameLongPosition.Add(cfdPositions[i]);
+                    else if (cfdPositions[i].FullName == cfdPositions[j].FullName && !cfdPositions[j].IsLong)
+                        sameShortPosition.Add(cfdPositions[i]);
+                    else
+                        break;
+                }
+
+                if (sameLongPosition.Count > 0)
+                {
+                    envelope.body.D_IFI.TItem[TItemIndex] = new Models.Xml.IFI.EnvelopeBodyD_IFITItem
+                    {
+                        TypeId = "PLIFI",
+                        Type = "02",
+                        TypeName = "finančne pogodbe na razliko",
+                        Name = cfdPositions[i].FullName.Trim(),
+                        HasForeignTax = false,
+                    };
+                    Models.Xml.IFI.EnvelopeBodyD_IFITItemTSubItem[] TSubItem = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTSubItem[sameLongPosition.Count * 2];
+                    for (int j = 0; j < sameLongPosition.Count; j++)
+                    {
+                        TSubItem[j * 2] = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTSubItem
+                        {
+                            F8 = sameLongPosition[j].Units,
+                            Purchase = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTSubItemPurchase
+                            {
+                                F1 = sameLongPosition[j].OpenDate,
+                                F2 = "A",
+                                F3 = sameLongPosition[j].Units,
+                                F4 = sameLongPosition[j].EUROpenPrice,
+                                F9 = sameLongPosition[j].Leverage != 1
+                            }
+                        };
+                        TSubItem[j * 2 + 1] = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTSubItem
+                        {
+                            F8 = 0,
+                            Sale = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTSubItemSale
+                            {
+                                F5 = sameLongPosition[j].CloseDate,
+                                F6 = sameLongPosition[j].Units,
+                                F7 = sameLongPosition[j].EURClosePrice,
+                            }
+                        };
+                    }
+                    envelope.body.D_IFI.TItem[TItemIndex].TSubItem = TSubItem;
+                    TItemIndex++;
+                }
+
+                if (sameShortPosition.Count > 0)
+                {
+                    envelope.body.D_IFI.TItem[TItemIndex] = new Models.Xml.IFI.EnvelopeBodyD_IFITItem
+                    {
+                        TypeId = "PLIFIShort",
+                        Type = "02",
+                        TypeName = "finančne pogodbe na razliko",
+                        Name = cfdPositions[i].FullName.Trim(),
+                        HasForeignTax = false,
+                    };
+
+                    Models.Xml.IFI.EnvelopeBodyD_IFITItemTShortSubItem[] TShortSubItem = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTShortSubItem[sameShortPosition.Count * 2];
+                    for (int j = 0; j < sameShortPosition.Count; j++)
+                    {
+                        TShortSubItem[j * 2] = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTShortSubItem
+                        {
+                            F8 = -sameShortPosition[j].Units,
+                            Sale = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTShortSubItemSale
+                            {
+                                F1 = sameShortPosition[j].OpenDate,
+                                F2 = sameShortPosition[j].Units,
+                                F3 = sameShortPosition[j].EUROpenPrice,
+                                F9 = sameShortPosition[j].Leverage != 1
+                            }
+                        };
+                        TShortSubItem[j * 2 + 1] = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTShortSubItem
+                        {
+                            F8 = 0,
+                            Purchase = new Models.Xml.IFI.EnvelopeBodyD_IFITItemTShortSubItemPurchase
+                            {
+                                F4 = sameShortPosition[j].CloseDate,
+                                F5 = "A",
+                                F6 = sameShortPosition[j].Units,
+                                F7 = sameShortPosition[j].EURClosePrice,
+                            }
+                        };
+                    }
+                    envelope.body.D_IFI.TItem[TItemIndex].TShortSubItem = TShortSubItem;
+                    TItemIndex++;
+                }
+                i += sameLongPosition.Count + sameShortPosition.Count - 1;
+                sameLongPosition.Clear();
+                sameShortPosition.Clear();
+            }
+
             System.Xml.Serialization.XmlSerializer writer = new(typeof(Models.Xml.IFI.Envelope));
 
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "//Doh_KDVP.xml";
+            string path = directoryName + "//D-IFI.xml";
             FileStream file = File.Create(path);
 
             writer.Serialize(file, envelope);
@@ -481,9 +603,6 @@ namespace LazyFURS
 
         private static void PrepareClosedPosition(ExcelPackage newPackage)
         {
-            //Order dividend data
-            positions = positions.OrderBy(x => x.FullName).ThenBy(x => x.OpenDate).ToList();
-
             if (compactPositions && positions.Count > 1)
             {
                 CompactPositions();
@@ -596,12 +715,16 @@ namespace LazyFURS
 
                     // Calculate end (close) values
                     calculatePosition.EURProfit = decimal.Parse(closedPositionsSheet.Cells[index, 9].Value.ToString()) / closeRate;
-                    if (!calculatePosition.IsLong)
+                    if (calculatePosition.IsLong)
                     {
-                        calculatePosition.EURProfit *= -1; // if it's short then we negate the profit since we make money when the prices fall
+                        calculatePosition.EURCloseValue = calculatePosition.EURStartValue + calculatePosition.EURProfit;
+                        calculatePosition.EURClosePrice = calculatePosition.EURCloseValue / calculatePosition.Units / closeRate;
                     }
-                    calculatePosition.EURCloseValue = calculatePosition.EURStartValue + calculatePosition.EURProfit;
-                    calculatePosition.EURClosePrice = calculatePosition.EURCloseValue / calculatePosition.Units / closeRate;
+                    else
+                    {
+                        calculatePosition.EURCloseValue = calculatePosition.EURStartValue + calculatePosition.EURProfit * -1;
+                        calculatePosition.EURClosePrice = calculatePosition.EURCloseValue / calculatePosition.Units / closeRate;
+                    }
 
                     // Values in native currency
                     calculatePosition.OpenRate = decimal.Parse(closedPositionsSheet.Cells[index, 10].Value.ToString());
@@ -614,6 +737,9 @@ namespace LazyFURS
                 }
                 isLastRow = true;
             }
+
+            //Order position data
+            positions = positions.OrderBy(x => x.FullName).ThenBy(x => x.OpenDate).ToList();
         }
 
         private static string GenerateName(string[] actionSplit)
@@ -656,6 +782,9 @@ namespace LazyFURS
                 }
                 isLastRow = true;
             }
+
+            //Order dividend data
+            dividends = dividends.OrderBy(x => x.FullName).ThenBy(x => x.PaymentDate).ToList();
         }
 
         private static Conversion GetFirstPossibleRate(DateTime d)

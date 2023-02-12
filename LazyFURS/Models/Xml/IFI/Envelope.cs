@@ -1,4 +1,6 @@
-﻿namespace LazyFURS.Models.Xml.IFI;
+﻿using System;
+
+namespace LazyFURS.Models.Xml.IFI;
 
 // NOTE: Generated code may require at least .NET Framework 4.5 or .NET Core/Standard 2.0.
 /// <remarks/>
@@ -938,6 +940,7 @@ public partial class EnvelopeBodyD_IFITItem
     private string countryNameField;
 
     private EnvelopeBodyD_IFITItemTSubItem[] tSubItemField;
+    private EnvelopeBodyD_IFITItemTShortSubItem[] tShortSubItem;
 
     /// <remarks/>
     public string TypeId
@@ -1083,6 +1086,20 @@ public partial class EnvelopeBodyD_IFITItem
             this.tSubItemField = value;
         }
     }
+
+    /// <remarks/>
+    [System.Xml.Serialization.XmlElementAttribute("TShortSubItem")]
+    public EnvelopeBodyD_IFITItemTShortSubItem[] TShortSubItem
+    {
+        get
+        {
+            return this.tShortSubItem;
+        }
+        set
+        {
+            this.tShortSubItem = value;
+        }
+    }
 }
 
 /// <remarks/>
@@ -1092,6 +1109,7 @@ public partial class EnvelopeBodyD_IFITItem
 public partial class EnvelopeBodyD_IFITItemTSubItem
 {
     private EnvelopeBodyD_IFITItemTSubItemPurchase purchaseField;
+    private EnvelopeBodyD_IFITItemTSubItemSale saleField;
 
     private decimal f8Field;
 
@@ -1109,6 +1127,19 @@ public partial class EnvelopeBodyD_IFITItemTSubItem
     }
 
     /// <remarks/>
+    public EnvelopeBodyD_IFITItemTSubItemSale Sale
+    {
+        get
+        {
+            return this.saleField;
+        }
+        set
+        {
+            this.saleField = value;
+        }
+    }
+
+    /// <remarks/>
     public decimal F8
     {
         get
@@ -1117,7 +1148,7 @@ public partial class EnvelopeBodyD_IFITItemTSubItem
         }
         set
         {
-            this.f8Field = value;
+            this.f8Field = Math.Round(value, 4);
         }
     }
 }
@@ -1174,7 +1205,7 @@ public partial class EnvelopeBodyD_IFITItemTSubItemPurchase
         }
         set
         {
-            this.f3Field = value;
+            this.f3Field = Math.Round(value, 4);
         }
     }
 
@@ -1187,7 +1218,7 @@ public partial class EnvelopeBodyD_IFITItemTSubItemPurchase
         }
         set
         {
-            this.f4Field = value;
+            this.f4Field = Math.Round(value, 4);
         }
     }
 
@@ -1201,6 +1232,59 @@ public partial class EnvelopeBodyD_IFITItemTSubItemPurchase
         set
         {
             this.f9Field = value;
+        }
+    }
+}
+
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+public partial class EnvelopeBodyD_IFITItemTSubItemSale
+{
+    private System.DateTime f5Field;
+
+    private decimal f6Field;
+
+    private decimal f7Field;
+
+    /// <remarks/>
+    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
+    public System.DateTime F5
+    {
+        get
+        {
+            return this.f5Field;
+        }
+        set
+        {
+            this.f5Field = value;
+        }
+    }
+
+    /// <remarks/>
+    public decimal F6
+    {
+        get
+        {
+            return this.f6Field;
+        }
+        set
+        {
+            this.f6Field = Math.Round(value, 4);
+        }
+    }
+
+    /// <remarks/>
+    public decimal F7
+    {
+        get
+        {
+            return this.f7Field;
+        }
+        set
+        {
+            this.f7Field = Math.Round(value, 4);
         }
     }
 }
@@ -1247,6 +1331,196 @@ public partial class AttachmentList
         set
         {
             this.externalAttachmentField = value;
+        }
+    }
+}
+
+// NOTE: Generated code may require at least .NET Framework 4.5 or .NET Core/Standard 2.0.
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+[System.Xml.Serialization.XmlRootAttribute(Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd", IsNullable = false)]
+public partial class EnvelopeBodyD_IFITItemTShortSubItem
+{
+    private EnvelopeBodyD_IFITItemTShortSubItemSale saleField;
+
+    private EnvelopeBodyD_IFITItemTShortSubItemPurchase purchaseField;
+
+    private decimal f8Field;
+
+    /// <remarks/>
+    public EnvelopeBodyD_IFITItemTShortSubItemSale Sale
+    {
+        get
+        {
+            return this.saleField;
+        }
+        set
+        {
+            this.saleField = value;
+        }
+    }
+
+    /// <remarks/>
+    public EnvelopeBodyD_IFITItemTShortSubItemPurchase Purchase
+    {
+        get
+        {
+            return this.purchaseField;
+        }
+        set
+        {
+            this.purchaseField = value;
+        }
+    }
+
+    /// <remarks/>
+    public decimal F8
+    {
+        get
+        {
+            return this.f8Field;
+        }
+        set
+        {
+            this.f8Field = Math.Round(value, 4);
+        }
+    }
+}
+
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+public partial class EnvelopeBodyD_IFITItemTShortSubItemSale
+{
+    private System.DateTime f1Field;
+
+    private decimal f2Field;
+
+    private decimal f3Field;
+
+    private bool f9Field;
+
+    /// <remarks/>
+    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
+    public System.DateTime F1
+    {
+        get
+        {
+            return this.f1Field;
+        }
+        set
+        {
+            this.f1Field = value;
+        }
+    }
+
+    /// <remarks/>
+    public decimal F2
+    {
+        get
+        {
+            return this.f2Field;
+        }
+        set
+        {
+            this.f2Field = Math.Round(value, 4);
+        }
+    }
+
+    /// <remarks/>
+    public decimal F3
+    {
+        get
+        {
+            return this.f3Field;
+        }
+        set
+        {
+            this.f3Field = Math.Round(value, 4);
+        }
+    }
+
+    /// <remarks/>
+    public bool F9
+    {
+        get
+        {
+            return this.f9Field;
+        }
+        set
+        {
+            this.f9Field = value;
+        }
+    }
+}
+
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://edavki.durs.si/Documents/Schemas/D_IFI_4.xsd")]
+public partial class EnvelopeBodyD_IFITItemTShortSubItemPurchase
+{
+    private System.DateTime f4Field;
+
+    private string f5Field;
+
+    private decimal f6Field;
+
+    private decimal f7Field;
+
+    /// <remarks/>
+    [System.Xml.Serialization.XmlElementAttribute(DataType = "date")]
+    public System.DateTime F4
+    {
+        get
+        {
+            return this.f4Field;
+        }
+        set
+        {
+            this.f4Field = value;
+        }
+    }
+
+    /// <remarks/>
+    public string F5
+    {
+        get
+        {
+            return this.f5Field;
+        }
+        set
+        {
+            this.f5Field = value;
+        }
+    }
+
+    /// <remarks/>
+    public decimal F6
+    {
+        get
+        {
+            return this.f6Field;
+        }
+        set
+        {
+            this.f6Field = Math.Round(value, 4);
+        }
+    }
+
+    /// <remarks/>
+    public decimal F7
+    {
+        get
+        {
+            return this.f7Field;
+        }
+        set
+        {
+            this.f7Field = Math.Round(value, 4);
         }
     }
 }
