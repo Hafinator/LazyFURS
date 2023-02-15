@@ -53,7 +53,7 @@ namespace LazyFURS
 
             Console.WriteLine();
             Console.WriteLine();
-            Console.Write("Would you like to combine dividends of the same source + same date into a single entity? (y/N)? ");
+            Console.Write("Would you like to combine dividends of the same source + same date into a single entity (needed if you have multiple dividends from the same source on the same day)? (y/N)? ");
             char input = Console.ReadKey().KeyChar;
             compactDividend = input == 'y' || input == 'Y';
             Console.WriteLine();
@@ -178,7 +178,7 @@ namespace LazyFURS
             dividendsSheet.Column(2).Width = 20;
             dividendsSheet.Cells[1, 3].Value = "Full Name";
             dividendsSheet.Column(3).Width = 40;
-            dividendsSheet.Cells[1, 4].Value = "EUR Dividend";
+            dividendsSheet.Cells[1, 4].Value = "EUR NET Dividend";
             dividendsSheet.Column(4).Width = 20;
             dividendsSheet.Cells[1, 5].Value = "EUR Foreign Tax";
             dividendsSheet.Column(5).Width = 20;
@@ -189,8 +189,8 @@ namespace LazyFURS
                 dividendsSheet.Cells[i + 2, 1].Value = dividends[i].PaymentDate.ToShortDateString();
                 dividendsSheet.Cells[i + 2, 2].Value = dividends[i].ISIN;
                 dividendsSheet.Cells[i + 2, 3].Value = dividends[i].FullName;
-                dividendsSheet.Cells[i + 2, 4].Value = Math.Round(dividends[i].EURDividend, 2).ToString(culture);
-                dividendsSheet.Cells[i + 2, 5].Value = Math.Round(dividends[i].EURForeignTax, 2).ToString(culture);
+                dividendsSheet.Cells[i + 2, 4].Value = Math.Round(dividends[i].EuroNetDividend, 2).ToString(culture);
+                dividendsSheet.Cells[i + 2, 5].Value = Math.Round(dividends[i].EuroForeignTax, 2).ToString(culture);
             }
         }
 
@@ -238,8 +238,8 @@ namespace LazyFURS
                     PayerAddress = isinToAddress.GetAddress(dividends[i].ISIN),
                     PayerCountry = country,
                     Type = "1",
-                    Value = Math.Round(dividends[i].EURDividend, 2),
-                    ForeignTax = Math.Round(dividends[i].EURForeignTax, 2),
+                    Value = Math.Round(dividends[i].EuroNetDividend + dividends[i].EuroForeignTax, 2),
+                    ForeignTax = Math.Round(dividends[i].EuroForeignTax, 2),
                     SourceCountry = country,
                 };
                 if (lowerTax)
@@ -357,7 +357,7 @@ namespace LazyFURS
                             F1 = samePositions[j].OpenDate,
                             F2 = "B",
                             F3 = samePositions[j].Units,
-                            F4 = samePositions[j].EUROpenPrice
+                            F4 = samePositions[j].EuroOpenPrice
                         }
                     };
                     securities.Row[j * 2 + 1] = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItemSecuritiesRow
@@ -369,7 +369,7 @@ namespace LazyFURS
                         {
                             F6 = samePositions[j].CloseDate,
                             F7 = samePositions[j].Units,
-                            F9 = samePositions[j].EURClosePrice,
+                            F9 = samePositions[j].EuroClosePrice,
                             F10 = false
                         }
                     };
@@ -483,7 +483,7 @@ namespace LazyFURS
                                 F1 = sameLongPosition[j].OpenDate,
                                 F2 = "A",
                                 F3 = sameLongPosition[j].Units,
-                                F4 = sameLongPosition[j].EUROpenPrice,
+                                F4 = sameLongPosition[j].EuroOpenPrice,
                                 F9 = sameLongPosition[j].Leverage != 1
                             }
                         };
@@ -494,7 +494,7 @@ namespace LazyFURS
                             {
                                 F5 = sameLongPosition[j].CloseDate,
                                 F6 = sameLongPosition[j].Units,
-                                F7 = sameLongPosition[j].EURClosePrice,
+                                F7 = sameLongPosition[j].EuroClosePrice,
                             }
                         };
                     }
@@ -523,7 +523,7 @@ namespace LazyFURS
                             {
                                 F1 = sameShortPosition[j].OpenDate,
                                 F2 = sameShortPosition[j].Units,
-                                F3 = sameShortPosition[j].EUROpenPrice,
+                                F3 = sameShortPosition[j].EuroOpenPrice,
                                 F9 = sameShortPosition[j].Leverage != 1
                             }
                         };
@@ -535,7 +535,7 @@ namespace LazyFURS
                                 F4 = sameShortPosition[j].CloseDate,
                                 F5 = "A",
                                 F6 = sameShortPosition[j].Units,
-                                F7 = sameShortPosition[j].EURClosePrice,
+                                F7 = sameShortPosition[j].EuroClosePrice,
                             }
                         };
                     }
@@ -564,8 +564,8 @@ namespace LazyFURS
             {
                 if (i > 0 && dividends[i].FullName == dividends[i - 1].FullName && dividends[i].PaymentDate == dividends[i - 1].PaymentDate)
                 {
-                    dividends[i - 1].EURDividend += dividends[i].EURDividend;
-                    dividends[i - 1].EURForeignTax += dividends[i].EURForeignTax;
+                    dividends[i - 1].EuroNetDividend += dividends[i].EuroNetDividend;
+                    dividends[i - 1].EuroForeignTax += dividends[i].EuroForeignTax;
                     dividends.Remove(dividends[i]);
                     i--;
                 }
@@ -585,9 +585,9 @@ namespace LazyFURS
                     && positions[i].Leverage == positions[i - 1].Leverage
                     && positions[i].IsLong == positions[i - 1].IsLong)
                 {
-                    positions[i - 1].EURStartValue += positions[i].EURStartValue;
-                    positions[i - 1].EURCloseValue += positions[i].EURCloseValue;
-                    positions[i - 1].EURProfit += positions[i].EURProfit;
+                    positions[i - 1].EuroStartValue += positions[i].EuroStartValue;
+                    positions[i - 1].EuroCloseValue += positions[i].EuroCloseValue;
+                    positions[i - 1].EuroProfit += positions[i].EuroProfit;
                     positions[i - 1].Units += positions[i].Units;
                     positions.Remove(positions[i]);
                     i--;
@@ -650,11 +650,11 @@ namespace LazyFURS
                 closedPositionSheed.Cells[i + 2, 6].Value = positions[i].Leverage;
                 closedPositionSheed.Cells[i + 2, 7].Value = positions[i].OpenDate.ToShortDateString();
                 closedPositionSheed.Cells[i + 2, 8].Value = positions[i].CloseDate.ToShortDateString();
-                closedPositionSheed.Cells[i + 2, 9].Value = Math.Round(positions[i].EURStartValue, 2).ToString(culture);
-                closedPositionSheed.Cells[i + 2, 10].Value = Math.Round(positions[i].EURCloseValue, 2).ToString(culture);
-                closedPositionSheed.Cells[i + 2, 11].Value = Math.Round(positions[i].EUROpenPrice, 2).ToString(culture);
-                closedPositionSheed.Cells[i + 2, 12].Value = Math.Round(positions[i].EURClosePrice, 2).ToString(culture);
-                closedPositionSheed.Cells[i + 2, 13].Value = Math.Round(positions[i].EURProfit, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 9].Value = Math.Round(positions[i].EuroStartValue, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 10].Value = Math.Round(positions[i].EuroCloseValue, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 11].Value = Math.Round(positions[i].EuroOpenPrice, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 12].Value = Math.Round(positions[i].EuroClosePrice, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 13].Value = Math.Round(positions[i].EuroProfit, 2).ToString(culture);
             }
         }
 
@@ -710,20 +710,20 @@ namespace LazyFURS
                     decimal closeRate = GetFirstPossibleRate(calculatePosition.CloseDate).Rate; // optimize rate retrieval
 
                     // Calculate start (open) values
-                    calculatePosition.EURStartValue = decimal.Parse(closedPositionsSheet.Cells[index, 3].Value.ToString()) / openRate;
-                    calculatePosition.EUROpenPrice = calculatePosition.EURStartValue / calculatePosition.Units / openRate;
+                    calculatePosition.EuroStartValue = decimal.Parse(closedPositionsSheet.Cells[index, 3].Value.ToString()) / openRate;
+                    calculatePosition.EuroOpenPrice = calculatePosition.EuroStartValue / calculatePosition.Units / openRate;
 
                     // Calculate end (close) values
-                    calculatePosition.EURProfit = decimal.Parse(closedPositionsSheet.Cells[index, 9].Value.ToString()) / closeRate;
+                    calculatePosition.EuroProfit = decimal.Parse(closedPositionsSheet.Cells[index, 9].Value.ToString()) / closeRate;
                     if (calculatePosition.IsLong)
                     {
-                        calculatePosition.EURCloseValue = calculatePosition.EURStartValue + calculatePosition.EURProfit;
-                        calculatePosition.EURClosePrice = calculatePosition.EURCloseValue / calculatePosition.Units / closeRate;
+                        calculatePosition.EuroCloseValue = calculatePosition.EuroStartValue + calculatePosition.EuroProfit;
+                        calculatePosition.EuroClosePrice = calculatePosition.EuroCloseValue / calculatePosition.Units / closeRate;
                     }
                     else
                     {
-                        calculatePosition.EURCloseValue = calculatePosition.EURStartValue + calculatePosition.EURProfit * -1;
-                        calculatePosition.EURClosePrice = calculatePosition.EURCloseValue / calculatePosition.Units / closeRate;
+                        calculatePosition.EuroCloseValue = calculatePosition.EuroStartValue + calculatePosition.EuroProfit * -1;
+                        calculatePosition.EuroClosePrice = calculatePosition.EuroCloseValue / calculatePosition.Units / closeRate;
                     }
 
                     // Values in native currency
@@ -772,8 +772,8 @@ namespace LazyFURS
 
                     decimal rate = GetFirstPossibleRate(calculateDividend.PaymentDate).Rate; // optimize rate retrieval
 
-                    calculateDividend.EURDividend = decimal.Parse(dividendSheet.Cells[index, 3].Value.ToString()) / rate;
-                    calculateDividend.EURForeignTax = decimal.Parse(dividendSheet.Cells[index, 5].Value.ToString()) / rate;
+                    calculateDividend.EuroNetDividend = decimal.Parse(dividendSheet.Cells[index, 3].Value.ToString()) / rate;
+                    calculateDividend.EuroForeignTax = decimal.Parse(dividendSheet.Cells[index, 5].Value.ToString()) / rate;
 
                     dividends.Add(calculateDividend);
 

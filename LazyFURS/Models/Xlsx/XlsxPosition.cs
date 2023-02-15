@@ -8,11 +8,11 @@ namespace LazyFURS.Models.Xlsx
         public string Type { get; set; }
         public string FullName { get; set; }
         public decimal Units { get; set; }
-        public decimal EURStartValue { get; set; }
-        public decimal EURCloseValue { get; set; }
-        public decimal EUROpenPrice { get; set; }
-        public decimal EURClosePrice { get; set; }
-        public decimal EURProfit { get; set; }
+        public decimal EuroStartValue { get; set; }
+        public decimal EuroCloseValue { get; set; }
+        public decimal EuroOpenPrice { get; set; }
+        public decimal EuroClosePrice { get; set; }
+        public decimal EuroProfit { get; set; }
         public decimal OpenRate { get; set; }
         public decimal CloseRate { get; set; }
         public DateTime OpenDate { get; set; }
