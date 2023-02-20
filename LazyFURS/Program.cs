@@ -698,8 +698,8 @@ namespace LazyFURS
                     {
                         IsLong = actionSplit[0] == "Buy",
                         FullName = GenerateName(actionSplit),
-                        OpenDate = DateTime.Parse(closedPositionsSheet.Cells[index, 5].Value.ToString()).Date,
-                        CloseDate = DateTime.Parse(closedPositionsSheet.Cells[index, 6].Value.ToString()).Date,
+                        OpenDate = DateTime.Parse(closedPositionsSheet.Cells[index, 5].Value.ToString(), CultureInfo.InvariantCulture).Date,
+                        CloseDate = DateTime.Parse(closedPositionsSheet.Cells[index, 6].Value.ToString(), CultureInfo.InvariantCulture).Date,
                         Leverage = int.Parse(closedPositionsSheet.Cells[index, 7].Value.ToString()),
                         Units = decimal.Parse(closedPositionsSheet.Cells[index, 4].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
                         Type = closedPositionsSheet.Cells[index, 16].Value.ToString(),
@@ -765,7 +765,7 @@ namespace LazyFURS
                 {
                     XlsxDividend calculateDividend = new()
                     {
-                        PaymentDate = DateTime.Parse(dividendSheet.Cells[index, 1].Value.ToString()).Date,
+                        PaymentDate = DateTime.Parse(dividendSheet.Cells[index, 1].Value.ToString(), CultureInfo.InvariantCulture).Date,
                         FullName = dividendSheet.Cells[index, 2].Value.ToString(),
                         ISIN = dividendSheet.Cells[index, 8].Value.ToString()
                     };
