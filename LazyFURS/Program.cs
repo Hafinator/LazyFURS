@@ -597,6 +597,7 @@ namespace LazyFURS
 
         private static void GenerateOptionsMenu()
         {
+            Console.WriteLine();
             Console.WriteLine("What report would you like to generate?");
             Console.WriteLine();
             Console.WriteLine("1) Exit");
