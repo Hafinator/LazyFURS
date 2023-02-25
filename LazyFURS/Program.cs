@@ -22,7 +22,8 @@ namespace LazyFURS
 
         private static string exportName;
 
-        private static CultureInfo culture;
+        private static CultureInfo xlsxNumbersCulture;
+        private static CultureInfo xmlDatesCulture;
 
         private static bool compactDividend;
         private static bool compactPositions;
@@ -37,7 +38,8 @@ namespace LazyFURS
 
             WarningMessage();
 
-            culture = new CultureInfo("de-DE");
+            xlsxNumbersCulture = new CultureInfo("de-DE");
+            xmlDatesCulture = new CultureInfo("fr-FR");
 
             //Prepares the export, example: Etoro_EUR_report_15.1.2022.xlsx
             exportName = "Etoro_EUR_report_" + DateTime.Now.Day + "_" + DateTime.Now.Month + "_" + DateTime.Now.Year + ".xlsx";
@@ -189,8 +191,8 @@ namespace LazyFURS
                 dividendsSheet.Cells[i + 2, 1].Value = dividends[i].PaymentDate.ToShortDateString();
                 dividendsSheet.Cells[i + 2, 2].Value = dividends[i].ISIN;
                 dividendsSheet.Cells[i + 2, 3].Value = dividends[i].FullName;
-                dividendsSheet.Cells[i + 2, 4].Value = Math.Round(dividends[i].EuroNetDividend, 2).ToString(culture);
-                dividendsSheet.Cells[i + 2, 5].Value = Math.Round(dividends[i].EuroForeignTax, 2).ToString(culture);
+                dividendsSheet.Cells[i + 2, 4].Value = Math.Round(dividends[i].EuroNetDividend, 2).ToString(xlsxNumbersCulture);
+                dividendsSheet.Cells[i + 2, 5].Value = Math.Round(dividends[i].EuroForeignTax, 2).ToString(xlsxNumbersCulture);
             }
         }
 
@@ -339,7 +341,7 @@ namespace LazyFURS
                 for (int j = i + 1; j < nonCfdPositions.Count; j++)
                 {
                     if (nonCfdPositions[i].ISIN == nonCfdPositions[j].ISIN)
-                        samePositions.Add(nonCfdPositions[i]);
+                        samePositions.Add(nonCfdPositions[j]);
                     else
                         break;
                 }
@@ -455,9 +457,9 @@ namespace LazyFURS
                 for (int j = i + 1; j < cfdPositions.Count; j++)
                 {
                     if (cfdPositions[j].FullName == cfdPositions[i].FullName && cfdPositions[j].IsLong)
-                        sameLongPosition.Add(cfdPositions[i]);
+                        sameLongPosition.Add(cfdPositions[j]);
                     else if (cfdPositions[i].FullName == cfdPositions[j].FullName && !cfdPositions[j].IsLong)
-                        sameShortPosition.Add(cfdPositions[i]);
+                        sameShortPosition.Add(cfdPositions[j]);
                     else
                         break;
                 }
@@ -647,15 +649,15 @@ namespace LazyFURS
                 closedPositionSheed.Cells[i + 2, 2].Value = positions[i].FullName;
                 closedPositionSheed.Cells[i + 2, 3].Value = positions[i].Type;
                 closedPositionSheed.Cells[i + 2, 4].Value = positions[i].IsLong ? "Long" : "Short";
-                closedPositionSheed.Cells[i + 2, 5].Value = positions[i].Units.ToString(culture);
+                closedPositionSheed.Cells[i + 2, 5].Value = positions[i].Units.ToString(xlsxNumbersCulture);
                 closedPositionSheed.Cells[i + 2, 6].Value = positions[i].Leverage;
                 closedPositionSheed.Cells[i + 2, 7].Value = positions[i].OpenDate.ToShortDateString();
                 closedPositionSheed.Cells[i + 2, 8].Value = positions[i].CloseDate.ToShortDateString();
-                closedPositionSheed.Cells[i + 2, 9].Value = Math.Round(positions[i].EuroStartValue, 2).ToString(culture);
-                closedPositionSheed.Cells[i + 2, 10].Value = Math.Round(positions[i].EuroCloseValue, 2).ToString(culture);
-                closedPositionSheed.Cells[i + 2, 11].Value = Math.Round(positions[i].EuroOpenPrice, 2).ToString(culture);
-                closedPositionSheed.Cells[i + 2, 12].Value = Math.Round(positions[i].EuroClosePrice, 2).ToString(culture);
-                closedPositionSheed.Cells[i + 2, 13].Value = Math.Round(positions[i].EuroProfit, 2).ToString(culture);
+                closedPositionSheed.Cells[i + 2, 9].Value = Math.Round(positions[i].EuroStartValue, 2).ToString(xlsxNumbersCulture);
+                closedPositionSheed.Cells[i + 2, 10].Value = Math.Round(positions[i].EuroCloseValue, 2).ToString(xlsxNumbersCulture);
+                closedPositionSheed.Cells[i + 2, 11].Value = Math.Round(positions[i].EuroOpenPrice, 2).ToString(xlsxNumbersCulture);
+                closedPositionSheed.Cells[i + 2, 12].Value = Math.Round(positions[i].EuroClosePrice, 2).ToString(xlsxNumbersCulture);
+                closedPositionSheed.Cells[i + 2, 13].Value = Math.Round(positions[i].EuroProfit, 2).ToString(xlsxNumbersCulture);
             }
         }
 
@@ -699,8 +701,8 @@ namespace LazyFURS
                     {
                         IsLong = actionSplit[0] == "Buy",
                         FullName = GenerateName(actionSplit),
-                        OpenDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, 5].Value.ToString(), "dd/MM/yyyy hh:mm:ss", CultureInfo.InvariantCulture).Date,
-                        CloseDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, 6].Value.ToString(), "dd/MM/yyyy hh:mm:ss", CultureInfo.InvariantCulture).Date,
+                        OpenDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, 5].Value.ToString(), "dd/MM/yyyy HH:mm:ss", xmlDatesCulture).Date,
+                        CloseDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, 6].Value.ToString(), "dd/MM/yyyy HH:mm:ss", xmlDatesCulture).Date,
                         Leverage = int.Parse(closedPositionsSheet.Cells[index, 7].Value.ToString()),
                         Units = decimal.Parse(closedPositionsSheet.Cells[index, 4].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
                         Type = closedPositionsSheet.Cells[index, 16].Value.ToString(),
@@ -766,7 +768,7 @@ namespace LazyFURS
                 {
                     XlsxDividend calculateDividend = new()
                     {
-                        PaymentDate = DateTime.ParseExact(dividendSheet.Cells[index, 1].Value.ToString(), "dd/MM/yyyy", CultureInfo.InvariantCulture).Date,
+                        PaymentDate = DateTime.ParseExact(dividendSheet.Cells[index, 1].Value.ToString(), "dd/MM/yyyy", xmlDatesCulture).Date,
                         FullName = dividendSheet.Cells[index, 2].Value.ToString(),
                         ISIN = dividendSheet.Cells[index, 8].Value.ToString()
                     };
