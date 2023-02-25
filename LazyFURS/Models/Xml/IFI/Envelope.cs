@@ -1148,7 +1148,7 @@ public partial class EnvelopeBodyD_IFITItemTSubItem
         }
         set
         {
-            this.f8Field = Math.Round(value, 4);
+            this.f8Field = Math.Round(value, 8);
         }
     }
 }
@@ -1205,7 +1205,7 @@ public partial class EnvelopeBodyD_IFITItemTSubItemPurchase
         }
         set
         {
-            this.f3Field = Math.Round(value, 4);
+            this.f3Field = Math.Round(value, 8);
         }
     }
 
@@ -1218,7 +1218,7 @@ public partial class EnvelopeBodyD_IFITItemTSubItemPurchase
         }
         set
         {
-            this.f4Field = Math.Round(value, 4);
+            this.f4Field = Math.Round(value, 8);
         }
     }
 
@@ -1271,7 +1271,7 @@ public partial class EnvelopeBodyD_IFITItemTSubItemSale
         }
         set
         {
-            this.f6Field = Math.Round(value, 4);
+            this.f6Field = Math.Round(value, 8);
         }
     }
 
@@ -1284,7 +1284,7 @@ public partial class EnvelopeBodyD_IFITItemTSubItemSale
         }
         set
         {
-            this.f7Field = Math.Round(value, 4);
+            this.f7Field = Math.Round(value, 8);
         }
     }
 }
@@ -1384,7 +1384,7 @@ public partial class EnvelopeBodyD_IFITItemTShortSubItem
         }
         set
         {
-            this.f8Field = Math.Round(value, 4);
+            this.f8Field = Math.Round(value, 8);
         }
     }
 }
@@ -1426,7 +1426,7 @@ public partial class EnvelopeBodyD_IFITItemTShortSubItemSale
         }
         set
         {
-            this.f2Field = Math.Round(value, 4);
+            this.f2Field = Math.Round(value, 8);
         }
     }
 
@@ -1439,7 +1439,7 @@ public partial class EnvelopeBodyD_IFITItemTShortSubItemSale
         }
         set
         {
-            this.f3Field = Math.Round(value, 4);
+            this.f3Field = Math.Round(value, 8);
         }
     }
 
@@ -1507,7 +1507,7 @@ public partial class EnvelopeBodyD_IFITItemTShortSubItemPurchase
         }
         set
         {
-            this.f6Field = Math.Round(value, 4);
+            this.f6Field = Math.Round(value, 8);
         }
     }
 
@@ -1520,7 +1520,7 @@ public partial class EnvelopeBodyD_IFITItemTShortSubItemPurchase
         }
         set
         {
-            this.f7Field = Math.Round(value, 4);
+            this.f7Field = Math.Round(value, 8);
         }
     }
 }
