@@ -26,6 +26,7 @@ namespace LazyFURS
             data.Add("DK", "10. člen, odstavek 2d");
             data.Add("CL", string.Empty); // No contract between countries
             data.Add("CA", "10. člen, odstavek 2d"); // No contract between countries
+            data.Add("FI", "10. člen, odstavek 1b"); // No contract between countries
         }
 
         public string GetDoubleTaxationExemption(string Iso2)

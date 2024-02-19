@@ -101,6 +101,35 @@ namespace LazyFURS
             data.Add("CA9628791027", "CA");
             data.Add("CA98462Y1007", "CA");
             data.Add("CH0011075394", "CH");
+            data.Add("CH1169360919", "CH");
+            data.Add("US02319V1035", "US");
+            data.Add("US02390A1016", "US");
+            data.Add("USN070592100", "US");
+            data.Add("ES0113900J37", "ES");
+            data.Add("DE0005190003", "DE");
+            data.Add("US1101221083", "US");
+            data.Add("PAP310761054", "US");
+            data.Add("US25490K5965", "US");
+            data.Add("GB00BN7SWP63", "GB");
+            data.Add("US38045R2067", "US");
+            data.Add("US40049J2069", "US");
+            data.Add("US46429B5984", "US");
+            data.Add("CH0013841017", "CH");
+            data.Add("DE0008430026", "DE");
+            data.Add("US63884N1081", "US");
+            data.Add("FI0009000681", "FI");
+            data.Add("US7134481081", "US");
+            data.Add("ES0173516115", "ES");
+            data.Add("DE0007037129", "DE");
+            data.Add("CH0418792922", "CH");
+            data.Add("US8552441094", "US");
+            data.Add("NL0000226223", "FR");
+            data.Add("GB0001383545", "GB");
+            data.Add("US9229085538", "US");
+            data.Add("FR0000125486", "FR");
+            data.Add("KYG982391099", "US");
+            data.Add("KYG6683N1034", "US");
+            data.Add("US58733R1023", "US");
         }
 
         public string GetCountry(string isin)
@@ -110,7 +139,7 @@ namespace LazyFURS
                 return result;
             }
             Console.WriteLine("The country for " + isin + " is missing! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
-            Console.WriteLine("The data set can be modified quicker if you provide me the the data in this format: \"ISIN, ISO 3166-1 alpha-2\"");
+            Console.WriteLine("The data set can be modified quicker if you provide me the data in this format: \"ISIN, ISO 3166-1 alpha-2\"");
             return "COUNTRY MISSING";
         }
     }

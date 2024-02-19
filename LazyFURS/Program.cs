@@ -14,9 +14,27 @@ namespace LazyFURS
 {
     internal class Program
     {
+        /*
+         * In eToro there are only 3 truths:
+         * 1) The Units column represents the actual unit count
+         * 2) The Amount column ALWAYS shows values in USD
+         * 3) The Profit column ALWAYS shows values in USD
+         *
+         * Everything else has no useful value
+         */
+
+        private const int NAME_CELL_INDEX = 2;
+        private const int DATE_CELL_INDEX = 1;
+        private const int CLOSED_POSITIONS_ISIN_CELL_INDEX = 19;
+        private const int CLOSED_POSITIONS_UNITS_INDEX = 4;
+        private const int CLOSED_POSITIONS_OPEN_RATE_INDEX = 12;
+        private const int CLOSED_POSITIONS_CLOSE_RATE_INDEX = 13;
+
         private static readonly HttpClient client = new();
 
-        private static Conversion[] conversionData;
+        private static Conversion[] UsdConversionData;
+        private static Conversion[] ChfConversionData;
+        private static Conversion[] GbpConversionData;
         private static List<XlsxDividend> dividends;
         private static List<XlsxPosition> positions;
 
@@ -30,6 +48,7 @@ namespace LazyFURS
 
         private static IsinToAddress isinToAddress;
         private static IsinToCountry isinToCountry;
+        private static IsinToCurrency isinToCurrency;
         private static CountryToTaxReduction countryToTaxReduction;
 
         private static async Task Main()
@@ -66,6 +85,7 @@ namespace LazyFURS
 
             isinToAddress = new();
             isinToCountry = new();
+            isinToCurrency = new();
             countryToTaxReduction = new();
             FileInfo existingFile = null;
 
@@ -663,7 +683,29 @@ namespace LazyFURS
 
         private static async Task ReadCurrenciesApiData()
         {
-            HttpResponseMessage response = await client.GetAsync("https://sdw-wsrest.ecb.europa.eu/service/data/EXR/D.USD.EUR.SP00.A?format=csvdata");
+            SetUpRatesCollection(out UsdConversionData, await GetEcbRatesForCurrency(CurrencyType.USD));
+            SetUpRatesCollection(out ChfConversionData, await GetEcbRatesForCurrency(CurrencyType.CHF));
+            SetUpRatesCollection(out GbpConversionData, await GetEcbRatesForCurrency(CurrencyType.GBP));
+        }
+
+        private static void SetUpRatesCollection(out Conversion[] conversionArray, string[] rowData)
+        {
+            conversionArray = new Conversion[rowData.Length - 2];
+
+            for (int i = 1; i < rowData.Length - 1; i++)
+            {
+                string[] row = rowData[i].Split(',');
+
+                // Date and rate are at 6th and 7th position
+                conversionArray[i - 1] = new Conversion(row[6], row[7]);
+            }
+            //This is done to optimize data retrieval
+            conversionArray = conversionArray.OrderByDescending(x => x.IssuingDate).ToArray();
+        }
+
+        private static async Task<string[]> GetEcbRatesForCurrency(CurrencyType currency)
+        {
+            HttpResponseMessage response = await client.GetAsync("https://sdw-wsrest.ecb.europa.eu/service/data/EXR/D." + currency + ".EUR.SP00.A?format=csvdata&startPeriod=2007");
             if (!response.IsSuccessStatusCode)
             {
                 throw new ApplicationException("Data was not retrieved successfully!");
@@ -671,19 +713,7 @@ namespace LazyFURS
 
             string allData = await response.Content.ReadAsStringAsync();
             string[] rowData = allData.Split("\n");
-
-            conversionData = new Conversion[rowData.Length - 2];
-
-            for (int i = 1; i < rowData.Length - 1; i++)
-            {
-                string[] row = rowData[i].Split(',');
-
-                // Date and rate are at 6th and 7th position
-                conversionData[i - 1] = new Conversion(row[6], row[7]);
-            }
-
-            //This is done to optimize data retrieval
-            conversionData = conversionData.OrderByDescending(x => x.IssuingDate).ToArray();
+            return rowData;
         }
 
         private static void ReadClosedPosition(ExcelPackage package)
@@ -694,9 +724,9 @@ namespace LazyFURS
 
             while (!isLastRow)
             {
-                if (closedPositionsSheet.Cells[index, 1].Value != null)
+                if (closedPositionsSheet.Cells[index, DATE_CELL_INDEX].Value != null)
                 {
-                    string[] actionSplit = closedPositionsSheet.Cells[index, 2].Value.ToString().Split(' ');
+                    string[] actionSplit = closedPositionsSheet.Cells[index, NAME_CELL_INDEX].Value.ToString().Split(' ');
                     XlsxPosition calculatePosition = new()
                     {
                         IsLong = actionSplit[0] == "Buy",
@@ -705,33 +735,71 @@ namespace LazyFURS
                         CloseDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, 6].Value.ToString(), "dd/MM/yyyy HH:mm:ss", xmlDatesCulture).Date,
                         Leverage = int.Parse(closedPositionsSheet.Cells[index, 7].Value.ToString()),
                         Units = decimal.Parse(closedPositionsSheet.Cells[index, 4].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
-                        Type = closedPositionsSheet.Cells[index, 16].Value.ToString(),
-                        ISIN = closedPositionsSheet.Cells[index, 17].Value?.ToString() ?? "",
+                        Type = closedPositionsSheet.Cells[index, 18].Value.ToString(),
+                        ISIN = closedPositionsSheet.Cells[index, 19].Value?.ToString() ?? "",
                     };
+                    CurrencyType currency = isinToCurrency.GetCurrency(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_CELL_INDEX].Value.ToString());
+                    decimal openCurrencyRate = 1;
+                    decimal closeCurrencyRate = 1;
 
-                    decimal openRate = GetFirstPossibleRate(calculatePosition.OpenDate).Rate; // optimize rate retrieval
-                    decimal closeRate = GetFirstPossibleRate(calculatePosition.CloseDate).Rate; // optimize rate retrieval
-
-                    // Calculate start (open) values
-                    calculatePosition.EuroStartValue = decimal.Parse(closedPositionsSheet.Cells[index, 3].Value.ToString()) / openRate;
-                    calculatePosition.EuroOpenPrice = calculatePosition.EuroStartValue / calculatePosition.Units / openRate;
-
-                    // Calculate end (close) values
-                    calculatePosition.EuroProfit = decimal.Parse(closedPositionsSheet.Cells[index, 9].Value.ToString()) / closeRate;
-                    if (calculatePosition.IsLong)
+                    // EUR has less conversion logic
+                    if (currency == CurrencyType.EUR)
                     {
-                        calculatePosition.EuroCloseValue = calculatePosition.EuroStartValue + calculatePosition.EuroProfit;
-                        calculatePosition.EuroClosePrice = calculatePosition.EuroCloseValue / calculatePosition.Units / closeRate;
+                        // Calculate start (open) values
+                        calculatePosition.EuroOpenPrice = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_OPEN_RATE_INDEX].Value.ToString());
+                        calculatePosition.EuroStartValue = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_UNITS_INDEX].Value.ToString()) * calculatePosition.EuroOpenPrice;
+
+                        calculatePosition.EuroClosePrice = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_CLOSE_RATE_INDEX].Value.ToString());
+                        // Calculate end (close) values
+                        calculatePosition.EuroProfit = (calculatePosition.EuroClosePrice - calculatePosition.EuroOpenPrice) * calculatePosition.Units;
+
+                        // Values in native currency
+                        calculatePosition.OpenRate = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_OPEN_RATE_INDEX].Value.ToString());
+                        calculatePosition.CloseRate = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_CLOSE_RATE_INDEX].Value.ToString());
+
+                        if (calculatePosition.IsLong)
+                        {
+                            calculatePosition.EuroCloseValue = calculatePosition.EuroStartValue + calculatePosition.EuroProfit;
+                        }
+                        else
+                        {
+                            calculatePosition.EuroCloseValue = calculatePosition.EuroStartValue - calculatePosition.EuroProfit;
+                        }
                     }
                     else
                     {
-                        calculatePosition.EuroCloseValue = calculatePosition.EuroStartValue + calculatePosition.EuroProfit * -1;
-                        calculatePosition.EuroClosePrice = calculatePosition.EuroCloseValue / calculatePosition.Units / closeRate;
-                    }
+                        openCurrencyRate = GetFirstPossibleRate(calculatePosition.OpenDate, currency).Rate; // optimize rate retrieval
+                        closeCurrencyRate = GetFirstPossibleRate(calculatePosition.CloseDate, currency).Rate; // optimize rate retrieval
 
-                    // Values in native currency
-                    calculatePosition.OpenRate = decimal.Parse(closedPositionsSheet.Cells[index, 10].Value.ToString());
-                    calculatePosition.CloseRate = decimal.Parse(closedPositionsSheet.Cells[index, 11].Value.ToString());
+                        // Calculate start (open) values
+                        calculatePosition.EuroOpenPrice = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_OPEN_RATE_INDEX].Value.ToString()) / openCurrencyRate;
+                        calculatePosition.EuroStartValue = calculatePosition.Units * calculatePosition.EuroOpenPrice;
+
+                        // Calculate end (close) values
+                        calculatePosition.EuroProfit = (calculatePosition.EuroClosePrice - calculatePosition.EuroOpenPrice) * calculatePosition.Units;
+                        //                                                                                             Amount in CurrencyType
+                        calculatePosition.EuroClosePrice = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_CLOSE_RATE_INDEX].Value.ToString()) / closeCurrencyRate;
+
+                        if (calculatePosition.IsLong)
+                        {
+                            calculatePosition.EuroCloseValue = calculatePosition.Units * calculatePosition.EuroClosePrice;
+                        }
+                        else
+                        {
+                            calculatePosition.EuroCloseValue = calculatePosition.EuroStartValue - calculatePosition.EuroProfit;
+                        }
+
+                        // Values in native currency
+                        calculatePosition.OpenRate = decimal.Parse(closedPositionsSheet.Cells[index, 12].Value.ToString());
+                        calculatePosition.CloseRate = decimal.Parse(closedPositionsSheet.Cells[index, 13].Value.ToString());
+
+                        if (currency == CurrencyType.GBX)
+                        {
+                            // GBX => Great British pennies, 1GBP = 100GBX
+                            calculatePosition.EuroOpenPrice /= 100;
+                            calculatePosition.EuroClosePrice /= 100;
+                        }
+                    }
 
                     positions.Add(calculatePosition);
 
@@ -764,19 +832,19 @@ namespace LazyFURS
 
             while (!isLastRow)
             {
-                if (dividendSheet.Cells[index, 1].Value != null)
+                if (dividendSheet.Cells[index, DATE_CELL_INDEX].Value != null)
                 {
                     XlsxDividend calculateDividend = new()
                     {
-                        PaymentDate = DateTime.ParseExact(dividendSheet.Cells[index, 1].Value.ToString(), "dd/MM/yyyy", xmlDatesCulture).Date,
-                        FullName = dividendSheet.Cells[index, 2].Value.ToString(),
-                        ISIN = dividendSheet.Cells[index, 8].Value.ToString()
+                        PaymentDate = DateTime.ParseExact(dividendSheet.Cells[index, DATE_CELL_INDEX].Value.ToString(), "dd/MM/yyyy", xmlDatesCulture).Date,
+                        FullName = dividendSheet.Cells[index, NAME_CELL_INDEX].Value.ToString(),
+                        ISIN = dividendSheet.Cells[index, 10].Value.ToString()
                     };
 
-                    decimal rate = GetFirstPossibleRate(calculateDividend.PaymentDate).Rate; // optimize rate retrieval
+                    decimal rate = GetFirstPossibleRate(calculateDividend.PaymentDate, CurrencyType.USD).Rate; // optimize rate retrieval
 
                     calculateDividend.EuroNetDividend = decimal.Parse(dividendSheet.Cells[index, 3].Value.ToString()) / rate;
-                    calculateDividend.EuroForeignTax = decimal.Parse(dividendSheet.Cells[index, 5].Value.ToString()) / rate;
+                    calculateDividend.EuroForeignTax = decimal.Parse(dividendSheet.Cells[index, 6].Value.ToString()) / rate;
 
                     dividends.Add(calculateDividend);
 
@@ -790,17 +858,53 @@ namespace LazyFURS
             dividends = dividends.OrderBy(x => x.FullName).ThenBy(x => x.PaymentDate).ToList();
         }
 
-        private static Conversion GetFirstPossibleRate(DateTime d)
+        /// <summary>
+        /// Gets the X to EUR conversion for the specified currency on the given date
+        /// </summary>
+        /// <param name="d">Date</param>
+        /// <param name="currency"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">The currency isn't specified in the CurrencyType enum</exception>
+        private static Conversion GetFirstPossibleRate(DateTime d, CurrencyType currency)
         {
             DateTime date = d;
             Conversion result = null;
-            while (result == null)
+            switch (currency)
             {
-                //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
-                result = conversionData.FirstOrDefault(x => x.IssuingDate == date);
-                date = date.AddDays(-1);
+                case CurrencyType.USD:
+                    while (result == null)
+                    {
+                        //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
+                        result = UsdConversionData.FirstOrDefault(x => x.IssuingDate == date);
+                        date = date.AddDays(-1);
+                    }
+                    return result;
+
+                case CurrencyType.EUR:
+                    return new Conversion(date);
+
+                case CurrencyType.CHF:
+                    while (result == null)
+                    {
+                        //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
+                        result = ChfConversionData.FirstOrDefault(x => x.IssuingDate == date);
+                        date = date.AddDays(-1);
+                    }
+                    return result;
+
+                case CurrencyType.GBP:
+                case CurrencyType.GBX:
+                    while (result == null)
+                    {
+                        //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
+                        result = GbpConversionData.FirstOrDefault(x => x.IssuingDate == date);
+                        date = date.AddDays(-1);
+                    }
+                    return result;
+
+                default:
+                    throw new ArgumentException("Missing currency " + currency.ToString());
             }
-            return result;
         }
     }
 }

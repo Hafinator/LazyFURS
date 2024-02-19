@@ -101,6 +101,36 @@ namespace LazyFURS
             data.Add("CA9628791027", "1021 West Hastings Street Suite 3500 Vancouver, BC V6E 0C3 Canada");
             data.Add("CA98462Y1007", "Royal Bank Plaza Suite 2200 North Tower 200 Bay Street Toronto, ON M5J 2J3 Canada");
             data.Add("CH0011075394", "Mythenquai 2 Zurich 8002 Switzerland");
+            data.Add("CH1169360919", "Bruggerstrasse 71a Baden 5400 Switzerland");
+            data.Add("US02319V1035", "Rua Dr. Renato Paes de Barros, 1017 3rd Floor São Paulo, SP 04530-001 Brazil");
+            data.Add("US02390A1016", "Lago Zurich 245 Plaza Carso / Edificio Telcel, Piso 16 Colonia Ampliación Granada Miguel Hidalgo Mexico City, DF 11529 Mexico");
+            data.Add("USN070592100", "De Run 6501 Veldhoven 5504 DR Netherlands");
+            data.Add("ES0113900J37", "Santander Group City Av. de Cantabria s/n Boadilla del Monte Madrid 28660 Spain ");
+            data.Add("DE0005190003", "Petuelring 130 Munich 80809 Germany");
+            data.Add("US1101221083", "Route 206 & Province Line Road Princeton, NY 08543 United States");
+            data.Add("PAP310761054", "Boulevard Costa del Este Av. Principal y Av. de la Rotonda UrbanizaciOn Costa del Este Complejo Business Park,Torre Norte, Parq Panama City 0816-06819 Panama");
+            data.Add("US25490K5965", "ETF");
+            data.Add("GB00BN7SWP63", "980 Great West Road Middlesex Brentford TW8 9GS United Kingdom");
+            data.Add("US38045R2067", "Praca Comandante Linneu Gomes, S/N Portaria 3, prEdio 24 Jardim Aeroporto São Paulo, SP 04626-020 Brazil");
+            data.Add("US40049J2069", "Av. Vasco de Quiroga 2000 Building A Floor 4,Delegación Álvaro Obregón Col. Santa Fe Mexico City, DF 12210 Mexico");
+            data.Add("US46429B5984", "ETF");
+            data.Add("CH0013841017", "Muenchensteinerstrasse 38 Basel 4002 Switzerland");
+            data.Add("DE0008430026", "Königinstr. 107 Munich 80802 Germany");
+            data.Add("US63884N1081", "Avenida Alexandre Colares No. 1188, Sala A17-Bloco A Parque Anhanguera São Paulo, SP 05106-000 Brazil");
+            data.Add("FI0009000681", "Karakaari 7 Espoo 02610 Finland");
+            data.Add("US7134481081", "700 Anderson Hill Road Purchase, NY 10577 United States");
+            data.Add("ES0173516115", "Repsol Campus C/ Mendez Alvaro, 44 Madrid 28045 Spain");
+            data.Add("DE0007037129", "Zugerstrasse 50 Baar 6340 Switzerland");
+            data.Add("US8552441094", "2401 Utah Avenue South Seattle, WA 98134 United States");
+            data.Add("NL0000226223", "39 Chemin du Champ des Filles 1228 Plan-Les-Ouates Geneva Switzerland");
+            data.Add("GB0001383545", "ETF");
+            data.Add("US9229085538", "ETF");
+            data.Add("FR0000125486", "1973 boulevard de la Défense CS 10268 Cedex Nanterre 92757 France");
+            data.Add("KYG982391099", "20, Genesis Close George Town Grand Cayman KY-1-1208 Cayman Islands");
+            data.Add("CH0418792922", "Zugerstrasse 50 Baar 6340 Switzerland");
+            data.Add("KYG851581069", "Harbour Place 4th Floor 103 South Church Street PO Box 10240 George Town KY1-1002 Cayman Islands");
+            data.Add("KYG6683N1034", "Rua Capote Valente, 39 São Paulo, SP 5409-0000 Brazil ");
+            data.Add("US58733R1023", "WTC Free Zone Dr. Luis Bonavita 1294 Of. 1733 Tower II Montevideo 11300 Uruguay");
         }
 
         public string GetAddress(string isin)
@@ -109,8 +139,9 @@ namespace LazyFURS
             {
                 return result;
             }
+            Console.WriteLine();
             Console.WriteLine("The address for " + isin + " is missing! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
-            Console.WriteLine("The data set can be modified quicker if you provide me the the data in this format: \"ISIN, Address\" if its an ETF just write \"ETF\"");
+            Console.WriteLine("The data set can be modified quicker if you provide me the data in this format: \"ISIN, Address\" if its an ETF just write \"ETF\"");
             return "ADDRESS MISSING";
         }
     }
