@@ -131,6 +131,7 @@ namespace LazyFURS
             data.Add("KYG851581069", "Harbour Place 4th Floor 103 South Church Street PO Box 10240 George Town KY1-1002 Cayman Islands");
             data.Add("KYG6683N1034", "Rua Capote Valente, 39 São Paulo, SP 5409-0000 Brazil ");
             data.Add("US58733R1023", "WTC Free Zone Dr. Luis Bonavita 1294 Of. 1733 Tower II Montevideo 11300 Uruguay");
+            data.Add("KYG290181018", "Dr. Luis Bonavita 1294 Montevideo 11300 Uruguay");
         }
 
         public string GetAddress(string isin)

@@ -131,15 +131,16 @@ namespace LazyFURS
             data.Add("KYG851581069", CurrencyType.USD);
             data.Add("KYG6683N1034", CurrencyType.USD);
             data.Add("US58733R1023", CurrencyType.USD);
+            data.Add("KYG290181018", CurrencyType.USD);
         }
 
         public CurrencyType GetCurrency(string isin)
         {
-            if (data.TryGetValue(isin, out CurrencyType result))
+            if (isin != null && data.TryGetValue(isin, out CurrencyType result))
             {
                 return result;
             }
-            Console.WriteLine("The currency for " + isin + " is missing! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
+            Console.WriteLine("The currency for " + isin + " is missing or the item might be crypto! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
             Console.WriteLine("Falling back to USD");
             return CurrencyType.USD;
         }

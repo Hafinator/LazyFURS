@@ -738,7 +738,7 @@ namespace LazyFURS
                         Type = closedPositionsSheet.Cells[index, 18].Value.ToString(),
                         ISIN = closedPositionsSheet.Cells[index, 19].Value?.ToString() ?? "",
                     };
-                    CurrencyType currency = isinToCurrency.GetCurrency(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_CELL_INDEX].Value.ToString());
+                    CurrencyType currency = isinToCurrency.GetCurrency(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_CELL_INDEX].Value?.ToString());
                     decimal openCurrencyRate = 1;
                     decimal closeCurrencyRate = 1;
 

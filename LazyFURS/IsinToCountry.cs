@@ -130,6 +130,7 @@ namespace LazyFURS
             data.Add("KYG982391099", "US");
             data.Add("KYG6683N1034", "US");
             data.Add("US58733R1023", "US");
+            data.Add("KYG290181018", "US");
         }
 
         public string GetCountry(string isin)
