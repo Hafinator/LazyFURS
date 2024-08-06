@@ -132,16 +132,46 @@ namespace LazyFURS
             data.Add("KYG6683N1034", "Rua Capote Valente, 39 São Paulo, SP 5409-0000 Brazil ");
             data.Add("US58733R1023", "WTC Free Zone Dr. Luis Bonavita 1294 Of. 1733 Tower II Montevideo 11300 Uruguay");
             data.Add("KYG290181018", "Dr. Luis Bonavita 1294 Montevideo 11300 Uruguay");
+            data.Add("US82575P1075", "Constantia Office Park Cnr 14th Ave & Hendrik Potgieter Rd, 1709, Weltevreden Park, South Africa");
+            data.Add("US70450Y1038", "2211 North First Street San Jose, CA 95131 United States");
+            data.Add("US88160R1014", "1 Tesla Road Austin, TX 78725 United States");
+            data.Add("US0090661010", "888 Brannan Street San Francisco, CA 94103 United States");
+            data.Add("US30303M1027", "1 Meta Way Menlo Park, CA 94025 United States");
+            data.Add("US0231351067", "410 Terry Avenue North Seattle, WA 98109-5210 United States");
+            data.Add("US00724F1012", "345 Park Avenue San Jose, CA 95110-2704 United States");
+            data.Add("US19260Q1076", "251 Little Falls Drive Wilmington, DE 19808 United States");
+            data.Add("US64110L1061", "121 Albright Way Los Gatos, CA 95032 United States");
+            data.Add("US0079031078", "2485 Augustine Drive Santa Clara, CA 95054 United States");
+            data.Add("US02079K1079", "1600 Amphitheatre Parkway Mountain View, CA 94043 United States");
+            data.Add("US60770K1079", "200 Technology Square Cambridge, MA 02139 United States");
+            data.Add("NL0012969182", "Simon Carmiggeltstraat 6-50 Amsterdam, 1011 DJ Netherlands");
+            data.Add("US1512908898", "Avenida Ricardo Margáin Zozaya #325 Colonia Valle del Campestre San Pedro Garza García, NL 66265 Mexico");
+            data.Add("US10552T1079", "Av. Das NaCOes Unidas 14.401 22nd to 25th Floors Torre JequitibA CondomInio Parque da Cid ChAcara Santo AntOnio São Paulo, SP 04730-090 Brazil");
+            data.Add("US29082A1079", "Eldorado Business Tower 30th floor Avenida Dra. Ruth Cardoso, No. 8,501 Pinheiros São Paulo, SP 05425-070 Brazil");
+            data.Add("KYG687071012", "Avenida Brigadeiro Faria Lima, 1384 4º andar Parte A São Paulo, SP 01451-001 Brazil");
+            data.Add("LU0974299876", "37A Avenue J.F. Kennedy Luxembourg City, 1855 Luxembourg");
+            data.Add("US05501U1060", "Av. Marcos Penteado de Ulhôa Rodrigues n. 939, 8th floor Edifício Jatobá CondomÃ­nio Castelo Branco Office Park Tamboré Barueri, SP Brazil");
+            data.Add("IE000S9YS762", "Forge, 43 Church Street West Woking, GU21 6HT United Kingdom");
+            data.Add("US88688T1007", "265 Talbot Street West Leamington, ON N8H 5L4 Canada");
+            data.Add("US62914V1061", "Building 20 No. 56 AnTuo Road Anting Town Jiading District Shanghai, 201804 China");
+            data.Add("US98422D1054", "No. 8 Songgang Road Changxing Street Cencun Tianhe District Guangzhou, 510640 China");
+            data.Add("US5494981039", "7373 Gateway Boulevard Newark, CA 94560 United States");
+            data.Add("US76954A1034", "14600 Myford Road Irvine, CA 92606 United States");
+            data.Add("US50202M1027", "11 Wenliang Street Shunyi District Beijing, 101399 China");
+            data.Add("US45674M1018", "2100 Seaport Boulevard Redwood City, CA 94063 United States");
+            data.Add("US5253271028", "1750 Presidents Street Reston, VA 20190 United States");
+            data.Add("US31620M1062", "347 Riverside Avenue Jacksonville, FL 32202 United States");
+            data.Add("US44980X1090", "377 Simarano Drive Marlborough, MA 01752 United States");
         }
 
-        public string GetAddress(string isin)
+        public string GetAddress(string isin, string name)
         {
             if (data.TryGetValue(isin, out string result))
             {
                 return result;
             }
             Console.WriteLine();
-            Console.WriteLine("The address for " + isin + " is missing! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
+            Console.WriteLine("The address for " + (isin ?? name) + " is missing! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
             Console.WriteLine("The data set can be modified quicker if you provide me the data in this format: \"ISIN, Address\" if its an ETF just write \"ETF\"");
             return "ADDRESS MISSING";
         }

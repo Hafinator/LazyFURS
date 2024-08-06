@@ -132,15 +132,45 @@ namespace LazyFURS
             data.Add("KYG6683N1034", CurrencyType.USD);
             data.Add("US58733R1023", CurrencyType.USD);
             data.Add("KYG290181018", CurrencyType.USD);
+            data.Add("US82575P1075", CurrencyType.USD);
+            data.Add("US70450Y1038", CurrencyType.USD);
+            data.Add("US88160R1014", CurrencyType.USD);
+            data.Add("US0090661010", CurrencyType.USD);
+            data.Add("US30303M1027", CurrencyType.USD);
+            data.Add("US0231351067", CurrencyType.USD);
+            data.Add("US00724F1012", CurrencyType.USD);
+            data.Add("US19260Q1076", CurrencyType.USD);
+            data.Add("US64110L1061", CurrencyType.USD);
+            data.Add("US0079031078", CurrencyType.USD);
+            data.Add("US02079K1079", CurrencyType.USD);
+            data.Add("US60770K1079", CurrencyType.USD);
+            data.Add("NL0012969182", CurrencyType.EUR);
+            data.Add("US1512908898", CurrencyType.USD);
+            data.Add("US10552T1079", CurrencyType.USD);
+            data.Add("US29082A1079", CurrencyType.USD);
+            data.Add("KYG687071012", CurrencyType.USD);
+            data.Add("LU0974299876", CurrencyType.USD);
+            data.Add("US05501U1060", CurrencyType.USD);
+            data.Add("IE000S9YS762", CurrencyType.USD);
+            data.Add("US88688T1007", CurrencyType.USD);
+            data.Add("US62914V1061", CurrencyType.USD);
+            data.Add("US98422D1054", CurrencyType.USD);
+            data.Add("US5494981039", CurrencyType.USD);
+            data.Add("US76954A1034", CurrencyType.USD);
+            data.Add("US50202M1027", CurrencyType.USD);
+            data.Add("US45674M1018", CurrencyType.USD);
+            data.Add("US5253271028", CurrencyType.USD);
+            data.Add("US31620M1062", CurrencyType.USD);
+            data.Add("US44980X1090", CurrencyType.USD);
         }
 
-        public CurrencyType GetCurrency(string isin)
+        public CurrencyType GetCurrency(string isin, string name)
         {
             if (isin != null && data.TryGetValue(isin, out CurrencyType result))
             {
                 return result;
             }
-            Console.WriteLine("The currency for " + isin + " is missing or the item might be crypto! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
+            Console.WriteLine("The currency for " + (isin ?? name) + " is missing or the item might be crypto! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
             Console.WriteLine("Falling back to USD");
             return CurrencyType.USD;
         }

@@ -23,12 +23,30 @@ namespace LazyFURS
          * Everything else has no useful value
          */
 
-        private const int NAME_CELL_INDEX = 2;
-        private const int DATE_CELL_INDEX = 1;
-        private const int CLOSED_POSITIONS_ISIN_CELL_INDEX = 19;
-        private const int CLOSED_POSITIONS_UNITS_INDEX = 4;
-        private const int CLOSED_POSITIONS_OPEN_RATE_INDEX = 12;
-        private const int CLOSED_POSITIONS_CLOSE_RATE_INDEX = 13;
+        #region DIVIDEND_ONLY_CONSTANTS
+
+        private const int DIVIDEND_DATE_OF_PAYMENT_INDEX = 1;
+        private const int DIVIDEND_INSTRUMENT_NAME_INDEX = 2;
+        private const int DIVIDEND_NET_DIVIDEND_RECEIVED_USD_INDEX = 3;
+        private const int DIVIDEND_WITHHOLDING_TAX_AMOUNT_USD_INDEX = 6;
+        private const int DIVIDEND_ISIN_INDEX = 10;
+
+        #endregion DIVIDEND_ONLY_CONSTANTS
+
+        #region CLOSED_POSITIONS_CONSTANTS
+
+        private const int CLOSED_POSITIONS_ACTION_INDEX = 2;
+        private const int CLOSED_POSITIONS_LONG_SHORT_INDEX = 3;
+        private const int CLOSED_POSITIONS_UNITS_INDEX = 5;
+        private const int CLOSED_POSITIONS_OPEN_DATE_INDEX = 6;
+        private const int CLOSED_POSITIONS_CLOSE_DATE_INDEX = 7;
+        private const int CLOSED_POSITIONS_LEVRAGE_INDEX = 8;
+        private const int CLOSED_POSITIONS_OPEN_RATE_INDEX = 15;
+        private const int CLOSED_POSITIONS_CLOSE_RATE_INDEX = 16;
+        private const int CLOSED_POSITIONS_TYPE_INDEX = 21;
+        private const int CLOSED_POSITIONS_ISIN_INDEX = 22;
+
+        #endregion CLOSED_POSITIONS_CONSTANTS
 
         private static readonly HttpClient client = new();
 
@@ -53,6 +71,8 @@ namespace LazyFURS
 
         private static async Task Main()
         {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
             WelcomeMessage();
 
             WarningMessage();
@@ -62,8 +82,6 @@ namespace LazyFURS
 
             //Prepares the export, example: Etoro_EUR_report_15.1.2022.xlsx
             exportName = "Etoro_EUR_report_" + DateTime.Now.Day + "_" + DateTime.Now.Month + "_" + DateTime.Now.Year + ".xlsx";
-
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             dividends = new List<XlsxDividend>();
             positions = new List<XlsxPosition>();
@@ -251,13 +269,13 @@ namespace LazyFURS
             };
             for (int i = 0; i < dividends.Count; i++)
             {
-                string country = isinToCountry.GetCountry(dividends[i].ISIN);
+                string country = isinToCountry.GetCountry(dividends[i].ISIN, dividends[i].FullName);
                 envelope.body.Dividend[i] = new Models.Xml.Div.EnvelopeBodyDividend
                 {
                     Date = dividends[i].PaymentDate,
                     PayerIdentificationNumber = dividends[i].ISIN,
                     PayerName = dividends[i].FullName,
-                    PayerAddress = isinToAddress.GetAddress(dividends[i].ISIN),
+                    PayerAddress = isinToAddress.GetAddress(dividends[i].ISIN, dividends[i].FullName),
                     PayerCountry = country,
                     Type = "1",
                     Value = Math.Round(dividends[i].EuroNetDividend + dividends[i].EuroForeignTax, 2),
@@ -724,21 +742,24 @@ namespace LazyFURS
 
             while (!isLastRow)
             {
-                if (closedPositionsSheet.Cells[index, DATE_CELL_INDEX].Value != null)
+                // Check if the cell in a row has value, if not we're at the end
+                if (closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ACTION_INDEX].Value != null)
                 {
-                    string[] actionSplit = closedPositionsSheet.Cells[index, NAME_CELL_INDEX].Value.ToString().Split(' ');
+                    string[] actionSplit = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ACTION_INDEX].Value.ToString().Split(" (");
                     XlsxPosition calculatePosition = new()
                     {
-                        IsLong = actionSplit[0] == "Buy",
+                        IsLong = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_LONG_SHORT_INDEX].Value.ToString() == "Long",
                         FullName = GenerateName(actionSplit),
-                        OpenDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, 5].Value.ToString(), "dd/MM/yyyy HH:mm:ss", xmlDatesCulture).Date,
-                        CloseDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, 6].Value.ToString(), "dd/MM/yyyy HH:mm:ss", xmlDatesCulture).Date,
-                        Leverage = int.Parse(closedPositionsSheet.Cells[index, 7].Value.ToString()),
-                        Units = decimal.Parse(closedPositionsSheet.Cells[index, 4].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
-                        Type = closedPositionsSheet.Cells[index, 18].Value.ToString(),
-                        ISIN = closedPositionsSheet.Cells[index, 19].Value?.ToString() ?? "",
+                        OpenDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_OPEN_DATE_INDEX].Value.ToString(), "dd/MM/yyyy HH:mm:ss", xmlDatesCulture).Date,
+                        CloseDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_CLOSE_DATE_INDEX].Value.ToString(), "dd/MM/yyyy HH:mm:ss", xmlDatesCulture).Date,
+                        Leverage = int.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_LEVRAGE_INDEX].Value.ToString()),
+                        Units = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_UNITS_INDEX].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
+                        Type = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_TYPE_INDEX].Value.ToString(),
+                        ISIN = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_INDEX].Value?.ToString() ?? "",
                     };
-                    CurrencyType currency = isinToCurrency.GetCurrency(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_CELL_INDEX].Value?.ToString());
+
+                    CurrencyType currency = isinToCurrency.GetCurrency(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_INDEX].Value?.ToString(), actionSplit[0]);
+
                     decimal openCurrencyRate = 1;
                     decimal closeCurrencyRate = 1;
 
@@ -790,8 +811,8 @@ namespace LazyFURS
                         }
 
                         // Values in native currency
-                        calculatePosition.OpenRate = decimal.Parse(closedPositionsSheet.Cells[index, 12].Value.ToString());
-                        calculatePosition.CloseRate = decimal.Parse(closedPositionsSheet.Cells[index, 13].Value.ToString());
+                        calculatePosition.OpenRate = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_OPEN_RATE_INDEX].Value.ToString());
+                        calculatePosition.CloseRate = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_CLOSE_RATE_INDEX].Value.ToString());
 
                         if (currency == CurrencyType.GBX)
                         {
@@ -832,19 +853,19 @@ namespace LazyFURS
 
             while (!isLastRow)
             {
-                if (dividendSheet.Cells[index, DATE_CELL_INDEX].Value != null)
+                if (dividendSheet.Cells[index, DIVIDEND_DATE_OF_PAYMENT_INDEX].Value != null)
                 {
                     XlsxDividend calculateDividend = new()
                     {
-                        PaymentDate = DateTime.ParseExact(dividendSheet.Cells[index, DATE_CELL_INDEX].Value.ToString(), "dd/MM/yyyy", xmlDatesCulture).Date,
-                        FullName = dividendSheet.Cells[index, NAME_CELL_INDEX].Value.ToString(),
-                        ISIN = dividendSheet.Cells[index, 10].Value.ToString()
+                        PaymentDate = DateTime.ParseExact(dividendSheet.Cells[index, DIVIDEND_DATE_OF_PAYMENT_INDEX].Value.ToString(), "dd/MM/yyyy", xmlDatesCulture).Date,
+                        FullName = dividendSheet.Cells[index, DIVIDEND_INSTRUMENT_NAME_INDEX].Value.ToString(),
+                        ISIN = dividendSheet.Cells[index, DIVIDEND_ISIN_INDEX].Value.ToString()
                     };
 
                     decimal rate = GetFirstPossibleRate(calculateDividend.PaymentDate, CurrencyType.USD).Rate; // optimize rate retrieval
 
-                    calculateDividend.EuroNetDividend = decimal.Parse(dividendSheet.Cells[index, 3].Value.ToString()) / rate;
-                    calculateDividend.EuroForeignTax = decimal.Parse(dividendSheet.Cells[index, 6].Value.ToString()) / rate;
+                    calculateDividend.EuroNetDividend = decimal.Parse(dividendSheet.Cells[index, DIVIDEND_NET_DIVIDEND_RECEIVED_USD_INDEX].Value.ToString()) / rate;
+                    calculateDividend.EuroForeignTax = decimal.Parse(dividendSheet.Cells[index, DIVIDEND_WITHHOLDING_TAX_AMOUNT_USD_INDEX].Value.ToString()) / rate;
 
                     dividends.Add(calculateDividend);
 

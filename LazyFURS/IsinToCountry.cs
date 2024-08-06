@@ -131,15 +131,45 @@ namespace LazyFURS
             data.Add("KYG6683N1034", "US");
             data.Add("US58733R1023", "US");
             data.Add("KYG290181018", "US");
+            data.Add("US82575P1075", "ZA");
+            data.Add("US70450Y1038", "US");
+            data.Add("US88160R1014", "US");
+            data.Add("US0090661010", "US");
+            data.Add("US30303M1027", "US");
+            data.Add("US0231351067", "US");
+            data.Add("US00724F1012", "US");
+            data.Add("US19260Q1076", "US");
+            data.Add("US64110L1061", "US");
+            data.Add("US0079031078", "US");
+            data.Add("US02079K1079", "US");
+            data.Add("US60770K1079", "US");
+            data.Add("NL0012969182", "NL");
+            data.Add("US1512908898", "MX");
+            data.Add("US10552T1079", "BR");
+            data.Add("US29082A1079", "BR");
+            data.Add("KYG687071012", "BR");
+            data.Add("LU0974299876", "LU");
+            data.Add("US05501U1060", "BR");
+            data.Add("IE000S9YS762", "UK");
+            data.Add("US88688T1007", "CA");
+            data.Add("US62914V1061", "CN");
+            data.Add("US98422D1054", "CN");
+            data.Add("US5494981039", "US");
+            data.Add("US76954A1034", "US");
+            data.Add("US50202M1027", "CN");
+            data.Add("US45674M1018", "US");
+            data.Add("US5253271028", "US");
+            data.Add("US31620M1062", "US");
+            data.Add("US44980X1090", "US");
         }
 
-        public string GetCountry(string isin)
+        public string GetCountry(string isin, string name)
         {
             if (data.TryGetValue(isin, out string result))
             {
                 return result;
             }
-            Console.WriteLine("The country for " + isin + " is missing! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
+            Console.WriteLine("The country for " + (isin ?? name) + " is missing! Modify the report in eDavki to add this value manually and contact the developer so that new entries can be added.");
             Console.WriteLine("The data set can be modified quicker if you provide me the data in this format: \"ISIN, ISO 3166-1 alpha-2\"");
             return "COUNTRY MISSING";
         }
