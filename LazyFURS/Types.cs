@@ -1,11 +1,13 @@
 ﻿namespace LazyFURS
 {
-    public enum CurrencyType
+    public enum CurrencyType : byte
     {
         USD,
         EUR,
         CHF,
         GBP,
         GBX,
+        CAD,
+        NOK
     }
 }

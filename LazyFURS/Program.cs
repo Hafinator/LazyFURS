@@ -29,7 +29,7 @@ namespace LazyFURS
         private const int DIVIDEND_INSTRUMENT_NAME_INDEX = 2;
         private const int DIVIDEND_NET_DIVIDEND_RECEIVED_USD_INDEX = 3;
         private const int DIVIDEND_WITHHOLDING_TAX_AMOUNT_USD_INDEX = 6;
-        private const int DIVIDEND_ISIN_INDEX = 10;
+        //private const int DIVIDEND_ISIN_INDEX = 10; // Doesn't exist anymore :(
 
         #endregion DIVIDEND_ONLY_CONSTANTS
 
@@ -44,15 +44,18 @@ namespace LazyFURS
         private const int CLOSED_POSITIONS_OPEN_RATE_INDEX = 15;
         private const int CLOSED_POSITIONS_CLOSE_RATE_INDEX = 16;
         private const int CLOSED_POSITIONS_TYPE_INDEX = 21;
-        private const int CLOSED_POSITIONS_ISIN_INDEX = 22;
+        //private const int CLOSED_POSITIONS_ISIN_INDEX = 22;
 
         #endregion CLOSED_POSITIONS_CONSTANTS
+
+        private const string CRYPTO = "Crypto";
 
         private static readonly HttpClient client = new();
 
         private static Conversion[] UsdConversionData;
         private static Conversion[] ChfConversionData;
         private static Conversion[] GbpConversionData;
+        private static Conversion[] NokConversionData;
         private static List<XlsxDividend> dividends;
         private static List<XlsxPosition> positions;
 
@@ -64,10 +67,7 @@ namespace LazyFURS
         private static bool compactDividend;
         private static bool compactPositions;
 
-        private static IsinToAddress isinToAddress;
-        private static IsinToCountry isinToCountry;
-        private static IsinToCurrency isinToCurrency;
-        private static CountryToTaxReduction countryToTaxReduction;
+        private static CompanyManager companyManager;
 
         private static async Task Main()
         {
@@ -101,10 +101,7 @@ namespace LazyFURS
             input = Console.ReadKey().KeyChar;
             compactPositions = input == 'y' || input == 'Y';
 
-            isinToAddress = new();
-            isinToCountry = new();
-            isinToCurrency = new();
-            countryToTaxReduction = new();
+            companyManager = new();
             FileInfo existingFile = null;
 
             await ReadCurrenciesApiData();
@@ -269,22 +266,22 @@ namespace LazyFURS
             };
             for (int i = 0; i < dividends.Count; i++)
             {
-                string country = isinToCountry.GetCountry(dividends[i].ISIN, dividends[i].FullName);
+                CompanyEntity company = companyManager.GetCompany(dividends[i].FullName);
                 envelope.body.Dividend[i] = new Models.Xml.Div.EnvelopeBodyDividend
                 {
                     Date = dividends[i].PaymentDate,
                     PayerIdentificationNumber = dividends[i].ISIN,
                     PayerName = dividends[i].FullName,
-                    PayerAddress = isinToAddress.GetAddress(dividends[i].ISIN, dividends[i].FullName),
-                    PayerCountry = country,
+                    PayerAddress = company.Address,
+                    PayerCountry = company.Country,
                     Type = "1",
                     Value = Math.Round(dividends[i].EuroNetDividend + dividends[i].EuroForeignTax, 2),
                     ForeignTax = Math.Round(dividends[i].EuroForeignTax, 2),
-                    SourceCountry = country,
+                    SourceCountry = company.Country,
                 };
                 if (lowerTax)
                 {
-                    envelope.body.Dividend[i].ReliefStatement = countryToTaxReduction.GetDoubleTaxationExemption(country);
+                    envelope.body.Dividend[i].ReliefStatement = company.TaxReductionText;
                 }
             }
 
@@ -325,7 +322,7 @@ namespace LazyFURS
             {
                 if (position.Type != "CFD")
                 {
-                    if (position.Type == "Crypto")
+                    if (position.Type == CRYPTO)
                     {
                         continue;
                     }
@@ -373,12 +370,12 @@ namespace LazyFURS
                 Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVPItemSecurities securities = new()
                 {
                     IsFond = false,
-                    ISIN = nonCfdPositions[i].ISIN
+                    Name = nonCfdPositions[i].FullName
                 };
 
                 for (int j = i + 1; j < nonCfdPositions.Count; j++)
                 {
-                    if (nonCfdPositions[i].ISIN == nonCfdPositions[j].ISIN)
+                    if (nonCfdPositions[i].FullName == nonCfdPositions[j].FullName)
                         samePositions.Add(nonCfdPositions[j]);
                     else
                         break;
@@ -423,7 +420,7 @@ namespace LazyFURS
                     HasLossTransfer = false,
                     ForeignTransfer = false,
                     TaxDecreaseConformance = false,
-                    Name = nonCfdPositions[i].ISIN,
+                    Name = nonCfdPositions[i].FullName,
                     Securities = securities,
                 };
                 i += samePositions.Count - 1;
@@ -682,8 +679,14 @@ namespace LazyFURS
 
             for (int i = 0; i < positions.Count; i++)
             {
+                string isin = "";
+                if (!string.Equals(positions[i].Type, CRYPTO, StringComparison.Ordinal))
+                {
+                    isin = companyManager.GetCompany(positions[i].FullName).ISIN;
+                }
+
                 //Add data
-                closedPositionSheed.Cells[i + 2, 1].Value = positions[i].ISIN;
+                closedPositionSheed.Cells[i + 2, 1].Value = isin;
                 closedPositionSheed.Cells[i + 2, 2].Value = positions[i].FullName;
                 closedPositionSheed.Cells[i + 2, 3].Value = positions[i].Type;
                 closedPositionSheed.Cells[i + 2, 4].Value = positions[i].IsLong ? "Long" : "Short";
@@ -704,6 +707,7 @@ namespace LazyFURS
             SetUpRatesCollection(out UsdConversionData, await GetEcbRatesForCurrency(CurrencyType.USD));
             SetUpRatesCollection(out ChfConversionData, await GetEcbRatesForCurrency(CurrencyType.CHF));
             SetUpRatesCollection(out GbpConversionData, await GetEcbRatesForCurrency(CurrencyType.GBP));
+            SetUpRatesCollection(out NokConversionData, await GetEcbRatesForCurrency(CurrencyType.NOK));
         }
 
         private static void SetUpRatesCollection(out Conversion[] conversionArray, string[] rowData)
@@ -745,20 +749,23 @@ namespace LazyFURS
                 // Check if the cell in a row has value, if not we're at the end
                 if (closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ACTION_INDEX].Value != null)
                 {
-                    string[] actionSplit = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ACTION_INDEX].Value.ToString().Split(" (");
                     XlsxPosition calculatePosition = new()
                     {
                         IsLong = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_LONG_SHORT_INDEX].Value.ToString() == "Long",
-                        FullName = GenerateName(actionSplit),
+                        FullName = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ACTION_INDEX].Value.ToString(),
                         OpenDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_OPEN_DATE_INDEX].Value.ToString(), "dd/MM/yyyy HH:mm:ss", xmlDatesCulture).Date,
                         CloseDate = DateTime.ParseExact(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_CLOSE_DATE_INDEX].Value.ToString(), "dd/MM/yyyy HH:mm:ss", xmlDatesCulture).Date,
                         Leverage = int.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_LEVRAGE_INDEX].Value.ToString()),
                         Units = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_UNITS_INDEX].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
                         Type = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_TYPE_INDEX].Value.ToString(),
-                        ISIN = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_INDEX].Value?.ToString() ?? "",
+                        //ISIN = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_INDEX].Value?.ToString() ?? "",
                     };
-
-                    CurrencyType currency = isinToCurrency.GetCurrency(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_INDEX].Value?.ToString(), actionSplit[0]);
+                    CurrencyType currency = CurrencyType.USD;
+                    if (!string.Equals(calculatePosition.Type, CRYPTO, StringComparison.Ordinal))
+                    {
+                        CompanyEntity company = companyManager.GetCompany(calculatePosition.FullName);
+                        currency = company.Currency;
+                    }
 
                     decimal openCurrencyRate = 1;
                     decimal closeCurrencyRate = 1;
@@ -834,16 +841,6 @@ namespace LazyFURS
             positions = positions.OrderBy(x => x.FullName).ThenBy(x => x.OpenDate).ToList();
         }
 
-        private static string GenerateName(string[] actionSplit)
-        {
-            string result = "";
-            for (int i = 1; i < actionSplit.Length; i++)
-            {
-                result += actionSplit[i] + " ";
-            }
-            return result;
-        }
-
         private static void ReadDividends(ExcelPackage package)
         {
             ExcelWorksheet dividendSheet = package.Workbook.Worksheets[3];
@@ -855,20 +852,22 @@ namespace LazyFURS
             {
                 if (dividendSheet.Cells[index, DIVIDEND_DATE_OF_PAYMENT_INDEX].Value != null)
                 {
+                    CompanyEntity company = companyManager.GetCompany(dividendSheet.Cells[index, DIVIDEND_INSTRUMENT_NAME_INDEX].Value.ToString());
                     XlsxDividend calculateDividend = new()
                     {
                         PaymentDate = DateTime.ParseExact(dividendSheet.Cells[index, DIVIDEND_DATE_OF_PAYMENT_INDEX].Value.ToString(), "dd/MM/yyyy", xmlDatesCulture).Date,
-                        FullName = dividendSheet.Cells[index, DIVIDEND_INSTRUMENT_NAME_INDEX].Value.ToString(),
-                        ISIN = dividendSheet.Cells[index, DIVIDEND_ISIN_INDEX].Value.ToString()
+                        FullName = company.Name,
+                        ISIN = company.ISIN
                     };
 
                     decimal rate = GetFirstPossibleRate(calculateDividend.PaymentDate, CurrencyType.USD).Rate; // optimize rate retrieval
 
                     calculateDividend.EuroNetDividend = decimal.Parse(dividendSheet.Cells[index, DIVIDEND_NET_DIVIDEND_RECEIVED_USD_INDEX].Value.ToString()) / rate;
                     calculateDividend.EuroForeignTax = decimal.Parse(dividendSheet.Cells[index, DIVIDEND_WITHHOLDING_TAX_AMOUNT_USD_INDEX].Value.ToString()) / rate;
-
-                    dividends.Add(calculateDividend);
-
+                    if (calculateDividend.EuroNetDividend > 0)
+                    {
+                        dividends.Add(calculateDividend);
+                    }
                     index++;
                     continue;
                 }
@@ -909,6 +908,15 @@ namespace LazyFURS
                     {
                         //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
                         result = ChfConversionData.FirstOrDefault(x => x.IssuingDate == date);
+                        date = date.AddDays(-1);
+                    }
+                    return result;
+
+                case CurrencyType.NOK:
+                    while (result == null)
+                    {
+                        //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
+                        result = NokConversionData.FirstOrDefault(x => x.IssuingDate == date);
                         date = date.AddDays(-1);
                     }
                     return result;
