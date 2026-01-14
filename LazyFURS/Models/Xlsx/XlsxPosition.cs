@@ -18,5 +18,6 @@ namespace LazyFURS.Models.Xlsx
         public DateTime OpenDate { get; set; }
         public DateTime CloseDate { get; set; }
         public int Leverage { get; set; }
+        public string ISIN { get; set; }
     }
 }
