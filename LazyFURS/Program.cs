@@ -25,26 +25,26 @@ namespace LazyFURS
 
         #region DIVIDEND_ONLY_CONSTANTS
 
-        private const int DIVIDEND_DATE_OF_PAYMENT_INDEX = 1;
-        private const int DIVIDEND_INSTRUMENT_NAME_INDEX = 2;
-        private const int DIVIDEND_NET_DIVIDEND_RECEIVED_USD_INDEX = 3;
-        private const int DIVIDEND_WITHHOLDING_TAX_AMOUNT_USD_INDEX = 6;
-        //private const int DIVIDEND_ISIN_INDEX = 10; // Doesn't exist anymore :(
+        private const int DIVIDEND_DATE_OF_PAYMENT_INDEX = 1;        // Column A
+        private const int DIVIDEND_INSTRUMENT_NAME_INDEX = 2;        // Column B
+        private const int DIVIDEND_NET_DIVIDEND_RECEIVED_USD_INDEX = 3; // Column C
+        private const int DIVIDEND_WITHHOLDING_TAX_AMOUNT_USD_INDEX = 10; // Column J
+        private const int DIVIDEND_ISIN_INDEX = 14;
 
         #endregion DIVIDEND_ONLY_CONSTANTS
 
         #region CLOSED_POSITIONS_CONSTANTS
 
-        private const int CLOSED_POSITIONS_ACTION_INDEX = 2;
-        private const int CLOSED_POSITIONS_LONG_SHORT_INDEX = 3;
-        private const int CLOSED_POSITIONS_UNITS_INDEX = 5;
-        private const int CLOSED_POSITIONS_OPEN_DATE_INDEX = 6;
-        private const int CLOSED_POSITIONS_CLOSE_DATE_INDEX = 7;
-        private const int CLOSED_POSITIONS_LEVRAGE_INDEX = 8;
-        private const int CLOSED_POSITIONS_OPEN_RATE_INDEX = 15;
-        private const int CLOSED_POSITIONS_CLOSE_RATE_INDEX = 16;
-        private const int CLOSED_POSITIONS_TYPE_INDEX = 21;
-        //private const int CLOSED_POSITIONS_ISIN_INDEX = 22;
+        private const int CLOSED_POSITIONS_ACTION_INDEX = 2;        // Column B
+        private const int CLOSED_POSITIONS_LONG_SHORT_INDEX = 3;    // Column C
+        private const int CLOSED_POSITIONS_UNITS_INDEX = 5;         // Column E
+        private const int CLOSED_POSITIONS_OPEN_DATE_INDEX = 6;     // Column F
+        private const int CLOSED_POSITIONS_CLOSE_DATE_INDEX = 7;    // Column G
+        private const int CLOSED_POSITIONS_LEVRAGE_INDEX = 8;       // Column H
+        private const int CLOSED_POSITIONS_OPEN_RATE_INDEX = 15;    // Column O
+        private const int CLOSED_POSITIONS_CLOSE_RATE_INDEX = 16;   // Column P
+        private const int CLOSED_POSITIONS_TYPE_INDEX = 21;         // Column U
+        private const int CLOSED_POSITIONS_ISIN_INDEX = 22;
 
         #endregion CLOSED_POSITIONS_CONSTANTS
 
@@ -56,6 +56,7 @@ namespace LazyFURS
         private static Conversion[] ChfConversionData;
         private static Conversion[] GbpConversionData;
         private static Conversion[] NokConversionData;
+        private static Conversion[] CadConversionData;
         private static List<XlsxDividend> dividends;
         private static List<XlsxPosition> positions;
 
@@ -88,7 +89,7 @@ namespace LazyFURS
 
             Console.WriteLine("This location will be used as the path for the exports as well.");
             Console.Write("Path to your Etoro report: ");
-            string filePath = Console.ReadLine();
+            string filePath = "E:\\E-drive-Download\\etoro-account-statement-1-1-2025-12-31-2025.xlsx"; //= Console.ReadLine();
 
             Console.WriteLine();
             Console.WriteLine();
@@ -708,6 +709,7 @@ namespace LazyFURS
             SetUpRatesCollection(out ChfConversionData, await GetEcbRatesForCurrency(CurrencyType.CHF));
             SetUpRatesCollection(out GbpConversionData, await GetEcbRatesForCurrency(CurrencyType.GBP));
             SetUpRatesCollection(out NokConversionData, await GetEcbRatesForCurrency(CurrencyType.NOK));
+            SetUpRatesCollection(out CadConversionData, await GetEcbRatesForCurrency(CurrencyType.CAD));
         }
 
         private static void SetUpRatesCollection(out Conversion[] conversionArray, string[] rowData)
@@ -727,7 +729,7 @@ namespace LazyFURS
 
         private static async Task<string[]> GetEcbRatesForCurrency(CurrencyType currency)
         {
-            HttpResponseMessage response = await client.GetAsync("https://sdw-wsrest.ecb.europa.eu/service/data/EXR/D." + currency + ".EUR.SP00.A?format=csvdata&startPeriod=2007");
+            HttpResponseMessage response = await client.GetAsync("https://data-api.ecb.europa.eu/service/data/EXR/D." + currency + ".EUR.SP00.A?format=csvdata&startPeriod=2007");
             if (!response.IsSuccessStatusCode)
             {
                 throw new ApplicationException("Data was not retrieved successfully!");
@@ -758,12 +760,12 @@ namespace LazyFURS
                         Leverage = int.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_LEVRAGE_INDEX].Value.ToString()),
                         Units = decimal.Parse(closedPositionsSheet.Cells[index, CLOSED_POSITIONS_UNITS_INDEX].Value.ToString(), NumberStyles.Number, new CultureInfo("en-GB")),
                         Type = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_TYPE_INDEX].Value.ToString(),
-                        //ISIN = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_INDEX].Value?.ToString() ?? "",
+                        ISIN = closedPositionsSheet.Cells[index, CLOSED_POSITIONS_ISIN_INDEX].Value?.ToString() ?? "",
                     };
                     CurrencyType currency = CurrencyType.USD;
                     if (!string.Equals(calculatePosition.Type, CRYPTO, StringComparison.Ordinal))
                     {
-                        CompanyEntity company = companyManager.GetCompany(calculatePosition.FullName);
+                        CompanyEntity company = companyManager.GetCompany(calculatePosition.ISIN);
                         currency = company.Currency;
                     }
 
@@ -852,11 +854,11 @@ namespace LazyFURS
             {
                 if (dividendSheet.Cells[index, DIVIDEND_DATE_OF_PAYMENT_INDEX].Value != null)
                 {
-                    CompanyEntity company = companyManager.GetCompany(dividendSheet.Cells[index, DIVIDEND_INSTRUMENT_NAME_INDEX].Value.ToString());
+                    CompanyEntity company = companyManager.GetCompany(dividendSheet.Cells[index, DIVIDEND_ISIN_INDEX].Value.ToString());
                     XlsxDividend calculateDividend = new()
                     {
                         PaymentDate = DateTime.ParseExact(dividendSheet.Cells[index, DIVIDEND_DATE_OF_PAYMENT_INDEX].Value.ToString(), "dd/MM/yyyy", xmlDatesCulture).Date,
-                        FullName = company.Name,
+                        FullName = dividendSheet.Cells[index, DIVIDEND_INSTRUMENT_NAME_INDEX].Value.ToString(),
                         ISIN = company.ISIN
                     };
 
@@ -927,6 +929,15 @@ namespace LazyFURS
                     {
                         //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
                         result = GbpConversionData.FirstOrDefault(x => x.IssuingDate == date);
+                        date = date.AddDays(-1);
+                    }
+                    return result;
+
+                case CurrencyType.CAD:
+                    while (result == null)
+                    {
+                        //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
+                        result = CadConversionData.FirstOrDefault(x => x.IssuingDate == date);
                         date = date.AddDays(-1);
                     }
                     return result;

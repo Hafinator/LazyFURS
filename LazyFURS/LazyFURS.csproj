@@ -8,6 +8,13 @@
     <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
+
   <ItemGroup>
     <PackageReference Include="EPPlus" Version="7.0.9" />
   </ItemGroup>
