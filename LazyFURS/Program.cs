@@ -25,10 +25,10 @@ namespace LazyFURS
 
         #region DIVIDEND_ONLY_CONSTANTS
 
-        private const int DIVIDEND_DATE_OF_PAYMENT_INDEX = 1;        // Column A
-        private const int DIVIDEND_INSTRUMENT_NAME_INDEX = 2;        // Column B
-        private const int DIVIDEND_NET_DIVIDEND_RECEIVED_USD_INDEX = 3; // Column C
-        private const int DIVIDEND_WITHHOLDING_TAX_AMOUNT_USD_INDEX = 10; // Column J
+        private const int DIVIDEND_DATE_OF_PAYMENT_INDEX = 1;               // Column A
+        private const int DIVIDEND_INSTRUMENT_NAME_INDEX = 2;               // Column B
+        private const int DIVIDEND_NET_DIVIDEND_RECEIVED_USD_INDEX = 3;     // Column C
+        private const int DIVIDEND_WITHHOLDING_TAX_AMOUNT_USD_INDEX = 10;   // Column J
         private const int DIVIDEND_ISIN_INDEX = 14;
 
         #endregion DIVIDEND_ONLY_CONSTANTS
@@ -48,6 +48,15 @@ namespace LazyFURS
 
         #endregion CLOSED_POSITIONS_CONSTANTS
 
+        #region INTEREST_CONSTANTS
+
+        private const int INTEREST_DATE_INDEX = 1;      // Column A
+        private const int INTEREST_TYPE_INDEX = 2;      // Column B
+        private const int INTEREST_AMOUNT_INDEX = 4;    // Column D
+        private const string INTEREST_TYPE = "Interest Payment";
+
+        #endregion INTEREST_CONSTANTS
+
         private const string CRYPTO = "Crypto";
 
         private static readonly HttpClient client = new();
@@ -59,6 +68,7 @@ namespace LazyFURS
         private static Conversion[] CadConversionData;
         private static List<XlsxDividend> dividends;
         private static List<XlsxPosition> positions;
+        private static List<XlsxInterest> interests;
 
         private static string exportName;
 
@@ -86,10 +96,11 @@ namespace LazyFURS
 
             dividends = new List<XlsxDividend>();
             positions = new List<XlsxPosition>();
+            interests = new List<XlsxInterest>();
 
             Console.WriteLine("This location will be used as the path for the exports as well.");
             Console.Write("Path to your Etoro report: ");
-            string filePath = "E:\\E-drive-Download\\etoro-account-statement-1-1-2025-12-31-2025.xlsx"; //= Console.ReadLine();
+            string filePath = Console.ReadLine();
 
             Console.WriteLine();
             Console.WriteLine();
@@ -117,6 +128,7 @@ namespace LazyFURS
                 using ExcelPackage package = new(existingFile); //the using statement automatically calls Dispose() which closes the package.
                 ReadClosedPosition(package);
                 ReadDividends(package);
+                ReadInterests(package);
 
                 if (compactDividend && dividends.Count > 1)
                 {
@@ -150,6 +162,10 @@ namespace LazyFURS
                 else if (input == '5')
                 {
                     PrepareDIfiReport(existingFile.DirectoryName);
+                }
+                else if (input == '6')
+                {
+                    PrepareObrReport(existingFile.DirectoryName);
                 }
                 GenerateOptionsMenu();
                 input = Console.ReadKey().KeyChar;
@@ -596,6 +612,76 @@ namespace LazyFURS
             WriteExportDone();
         }
 
+        private static void PrepareObrReport(string directoryName)
+        {
+            uint vatId = SpecifyVatId();
+
+            decimal sumInterest = 0;
+            for (int i = 0; i < interests.Count; i++)
+            {
+                sumInterest += interests[i].AmountEUR;
+            }
+
+            Models.Xml.Obr.Envelope envelope = new()
+            {
+                Header = new()
+                {
+                    domain = "edavki.durs.si",
+                    CustodianInfo = new(),
+                    responseTo = null,
+                    taxpayer = new()
+                    {
+                        taxpayerType = Models.Xml.Obr.taxpayerTypeType.FO,
+                        taxpayerTypeSpecified = true,
+                        ItemElementName = Models.Xml.Obr.ItemChoiceType.taxNumber,
+                        Item = vatId.ToString(),
+                    },
+                    Workflow = new()
+                    {
+                        DocumentWorkflowID = "O",
+                        DocumentWorkflowName = null
+                    },
+                },
+                AttachmentList = [],
+                Signatures = new(),
+                body = new()
+                {
+                    Doh_Obr = new()
+                    {
+                        Period = (DateTime.UtcNow.Year - 1).ToString(),
+                        DocumentWorkflowID = "O",
+                        Interest =
+                        [
+                            new()
+                            {
+                                Date = new DateTime(DateTime.Now.Year - 1, 12, 31, 0, 0, 0),
+                                DateSpecified = true,
+                                Type = "1",
+                                Name = "eToro",
+                                Value = Math.Round(sumInterest, 2),
+                                ForeignTax = 0m,
+                                Address = "4 Profiti Ilia Street, Kanika International Business Center (KIBC), 7th Floor, Germasogeia 4046, Limassol, Cyprus",
+                                Country2 = "CY",
+                                Country = "CY",
+                                ValueSpecified = true,
+                                ForeignTaxSpecified = false,
+                            }
+                        ]
+                    },
+                    bodyContent = string.Empty
+                },
+            };
+
+            System.Xml.Serialization.XmlSerializer writer = new(typeof(Models.Xml.Obr.Envelope));
+
+            string path = directoryName + "//Doh_Obr.xml";
+            FileStream file = File.Create(path);
+            writer.Serialize(file, envelope);
+            file.Close();
+
+            WriteExportDone();
+        }
+
         private static void CompactDividends()
         {
             for (int i = 0; i < dividends.Count; i++)
@@ -643,6 +729,7 @@ namespace LazyFURS
             Console.WriteLine("3) Doh_Div report");
             Console.WriteLine("4) Doh_KDVP report");
             Console.WriteLine("5) D-IFI report");
+            Console.WriteLine("6) Doh_Obr report");
         }
 
         private static void PrepareClosedPosition(ExcelPackage newPackage)
@@ -878,6 +965,43 @@ namespace LazyFURS
 
             //Order dividend data
             dividends = dividends.OrderBy(x => x.FullName).ThenBy(x => x.PaymentDate).ToList();
+        }
+
+        private static void ReadInterests(ExcelPackage package)
+        {
+            ExcelWorksheet interestsSheet = package.Workbook.Worksheets[2];
+
+            int index = 2;// Indexing starts at 1... + we skip the header
+            bool isLastRow = false;
+
+            while (!isLastRow)
+            {
+                if (interestsSheet.Cells[index, INTEREST_TYPE_INDEX].Value != null)
+                {
+                    if ((string)interestsSheet.Cells[index, INTEREST_TYPE_INDEX].Value == INTEREST_TYPE)
+                    {
+                        XlsxInterest interest = new()
+                        {
+                            Date = DateTime.ParseExact(interestsSheet.Cells[index, INTEREST_DATE_INDEX].Value.ToString(), "dd/MM/yyyy hh:mm:ss", xmlDatesCulture).Date,
+                            AmountUSD = decimal.Parse(interestsSheet.Cells[index, INTEREST_AMOUNT_INDEX].Value.ToString())
+                        };
+
+                        decimal rate = GetFirstPossibleRate(interest.Date, CurrencyType.USD).Rate; // optimize rate retrieval
+
+                        interest.AmountEUR = interest.AmountUSD / rate;
+                        if (interest.AmountEUR > 0)
+                        {
+                            interests.Add(interest);
+                        }
+                    }
+                    index++;
+                    continue;
+                }
+                isLastRow = true;
+            }
+
+            //Order dividend data
+            interests = interests.OrderBy(x => x.Date).ToList();
         }
 
         /// <summary>
