@@ -216,7 +216,7 @@ namespace LazyFURS
             // Prepare closed positions sheet
             PrepareClosedPositionWorksheet(newPackage);
 
-            // Prepare closed positions sheet
+            // Prepare interest sheet
             PrepareInterestWorksheet(newPackage);
 
             // Set some document properties
