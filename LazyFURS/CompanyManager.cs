@@ -393,7 +393,6 @@ namespace LazyFURS
             ];
 
             companies = data.ToDictionary(data => data.ISIN, data => data);
-            data = null;
         }
 
         public CompanyEntity GetCompany(string key) // Currently the key is the name of the company
