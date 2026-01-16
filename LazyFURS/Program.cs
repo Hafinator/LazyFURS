@@ -301,7 +301,7 @@ namespace LazyFURS
                 {
                     Doh_Div = new()
                     {
-                        Period = (DateTime.UtcNow.Year - 1).ToString(),
+                        Period = (DateTime.Now.Year - 1).ToString(),
                     },
                     Dividend = new Models.Xml.Div.EnvelopeBodyDividend[dividends.Count]
                 }
@@ -395,7 +395,7 @@ namespace LazyFURS
                         KDVP = new Models.Xml.KDVP.EnvelopeBodyDoh_KDVPKDVP()
                         {
                             DocumentWorkflowID = "O",
-                            Year = DateTime.UtcNow.Year - 1,
+                            Year = DateTime.Now.Year - 1,
                             PeriodStart = new DateTime(DateTime.Now.Year - 1, 1, 1),
                             PeriodEnd = new DateTime(DateTime.Now.Year - 1, 12, 31),
                         },
@@ -673,7 +673,7 @@ namespace LazyFURS
                 {
                     Doh_Obr = new()
                     {
-                        Period = (DateTime.UtcNow.Year - 1).ToString(),
+                        Period = (DateTime.Now.Year - 1).ToString(),
                         DocumentWorkflowID = "O",
                         Interest =
                         [
