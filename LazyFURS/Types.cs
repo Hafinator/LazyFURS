@@ -8,6 +8,7 @@
         GBP,
         GBX,
         CAD,
-        NOK
+        NOK,
+        DKK
     }
 }

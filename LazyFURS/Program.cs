@@ -66,6 +66,7 @@ namespace LazyFURS
         private static Conversion[] GbpConversionData;
         private static Conversion[] NokConversionData;
         private static Conversion[] CadConversionData;
+        private static Conversion[] DkkConversionData;
         private static List<XlsxDividend> dividends;
         private static List<XlsxPosition> positions;
         private static List<XlsxInterest> interests;
@@ -116,9 +117,13 @@ namespace LazyFURS
             companyManager = new();
             FileInfo existingFile = null;
 
+            Console.WriteLine();
+            Console.WriteLine($"Retrieving currency conversions for {nameof(CurrencyType.USD)}, {nameof(CurrencyType.CHF)}, {nameof(CurrencyType.GBP)}, {nameof(CurrencyType.CAD)}, {nameof(CurrencyType.NOK)}, {nameof(CurrencyType.DKK)}");
             await ReadCurrenciesApiData();
 
             GenerateOptionsMenu();
+
+            Console.WriteLine();
             input = Console.ReadKey().KeyChar;
 
             if (input != '1')
@@ -206,10 +211,13 @@ namespace LazyFURS
         {
             using ExcelPackage newPackage = new();
             // Prepare dividends worksheet
-            PrepareDividends(newPackage);
+            PrepareDividendsWorksheet(newPackage);
 
             // Prepare closed positions sheet
-            PrepareClosedPosition(newPackage);
+            PrepareClosedPositionWorksheet(newPackage);
+
+            // Prepare closed positions sheet
+            PrepareInterestWorksheet(newPackage);
 
             // Set some document properties
             newPackage.Workbook.Properties.Title = "Etoro EUR statement";
@@ -220,7 +228,24 @@ namespace LazyFURS
             WriteExportDone();
         }
 
-        private static void PrepareDividends(ExcelPackage newPackage)
+        private static void PrepareInterestWorksheet(ExcelPackage newPackage)
+        {
+            //Add a new worksheet to the empty workbook
+            ExcelWorksheet interestSheet = newPackage.Workbook.Worksheets.Add("Interest_EUR");
+
+            //Add the headers
+            interestSheet.Cells[1, 1].Value = "Total Payment EUR";
+            interestSheet.Column(1).Width = 20;
+
+            decimal sum = 0;
+            for (int i = 0; i < interests.Count; i++)
+            {
+                sum += interests[i].AmountEUR;
+            }
+            interestSheet.Cells[2, 1].Value = sum;
+        }
+
+        private static void PrepareDividendsWorksheet(ExcelPackage newPackage)
         {
             //Add a new worksheet to the empty workbook
             ExcelWorksheet dividendsSheet = newPackage.Workbook.Worksheets.Add("Dividends_EUR");
@@ -283,7 +308,7 @@ namespace LazyFURS
             };
             for (int i = 0; i < dividends.Count; i++)
             {
-                CompanyEntity company = companyManager.GetCompany(dividends[i].FullName);
+                CompanyEntity company = companyManager.GetCompany(dividends[i].ISIN);
                 envelope.body.Dividend[i] = new Models.Xml.Div.EnvelopeBodyDividend
                 {
                     Date = dividends[i].PaymentDate,
@@ -732,7 +757,7 @@ namespace LazyFURS
             Console.WriteLine("6) Doh_Obr report");
         }
 
-        private static void PrepareClosedPosition(ExcelPackage newPackage)
+        private static void PrepareClosedPositionWorksheet(ExcelPackage newPackage)
         {
             //Add a new worksheet to the workbook
             ExcelWorksheet closedPositionSheed = newPackage.Workbook.Worksheets.Add("Closed_positions_EUR");
@@ -770,7 +795,7 @@ namespace LazyFURS
                 string isin = "";
                 if (!string.Equals(positions[i].Type, CRYPTO, StringComparison.Ordinal))
                 {
-                    isin = companyManager.GetCompany(positions[i].FullName).ISIN;
+                    isin = companyManager.GetCompany(positions[i].ISIN).ISIN;
                 }
 
                 //Add data
@@ -797,6 +822,7 @@ namespace LazyFURS
             SetUpRatesCollection(out GbpConversionData, await GetEcbRatesForCurrency(CurrencyType.GBP));
             SetUpRatesCollection(out NokConversionData, await GetEcbRatesForCurrency(CurrencyType.NOK));
             SetUpRatesCollection(out CadConversionData, await GetEcbRatesForCurrency(CurrencyType.CAD));
+            SetUpRatesCollection(out DkkConversionData, await GetEcbRatesForCurrency(CurrencyType.DKK));
         }
 
         private static void SetUpRatesCollection(out Conversion[] conversionArray, string[] rowData)
@@ -1062,6 +1088,15 @@ namespace LazyFURS
                     {
                         //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
                         result = CadConversionData.FirstOrDefault(x => x.IssuingDate == date);
+                        date = date.AddDays(-1);
+                    }
+                    return result;
+
+                case CurrencyType.DKK:
+                    while (result == null)
+                    {
+                        //Gets the value on the specified date. If the value doesn't exist, it tries to get values from a previous day.
+                        result = DkkConversionData.FirstOrDefault(x => x.IssuingDate == date);
                         date = date.AddDays(-1);
                     }
                     return result;
